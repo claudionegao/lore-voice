@@ -1,115 +1,103 @@
-"use client";
+import Image from "next/image";
 
-import React, { useState } from 'react';
-import { Room, UserRole } from '../types';
-import { RoomList } from './components/RoomList';
-import { CreateRoomForm } from './components/CreateRoomForm';
-import { UserRoleSelector } from './components/UserRoleSelector';
-
-const pageStyle: React.CSSProperties = {
-  minHeight: '100vh',
-  background: 'linear-gradient(135deg, #232526 0%, #414345 100%)',
-  color: '#fff',
-  fontFamily: 'Inter, Arial, sans-serif',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  padding: '2rem 0',
-};
-
-const cardStyle: React.CSSProperties = {
-  background: 'rgba(30,30,40,0.95)',
-  borderRadius: '1rem',
-  boxShadow: '0 4px 24px #0004',
-  padding: '2rem',
-  margin: '1rem 0',
-  width: '100%',
-  maxWidth: 420,
-};
-
-export default function HomePage() {
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
-  const [userRole, setUserRole] = useState<UserRole | null>(null);
-  const [userName, setUserName] = useState<string>("");
-
-  const handleCreateRoom = (data: { name: string; password?: string; maxPlayers?: number; maxListeners?: number }) => {
-    const newRoom: Room = {
-      id: Math.random().toString(36).slice(2),
-      name: data.name,
-      password: data.password,
-      ownerId: 'narrator',
-      maxPlayers: data.maxPlayers,
-      maxListeners: data.maxListeners,
-      users: [],
-      narrators: [],
-      mutedPlayers: [],
-      bannedPlayers: [],
-      allowedToHearNarrator: {},
-      votes: {},
-    };
-    setRooms([...rooms, newRoom]);
-  };
-
-  const handleDeleteRoom = (roomId: string) => {
-    setRooms(rooms.filter(r => r.id !== roomId));
-    if (currentRoom && currentRoom.id === roomId) {
-      setCurrentRoom(null);
-      setUserRole(null);
-      setUserName("");
-    }
-  };
-
-  const handleJoinRoom = (roomId: string) => {
-    const room = rooms.find(r => r.id === roomId);
-    if (room) {
-      setCurrentRoom(room);
-      setUserRole(null); // Forçar seleção de tipo ao entrar na sala
-      setUserName("");
-    }
-  };
-
-  // Geração de nome aleatório simples
-  function generateRandomName() {
-    return 'User_' + Math.random().toString(36).substring(2, 8);
-  }
-
-  if (currentRoom && !userRole) {
-    return (
-      <div style={pageStyle}>
-        <div style={cardStyle}>
-          <h2 style={{marginBottom: 16}}>Entrar na sala: {currentRoom.name}</h2>
-          <UserRoleSelector onSelect={role => {
-            setUserRole(role);
-            setUserName(generateRandomName());
-          }} />
-        </div>
-      </div>
-    );
-  }
-
-  if (currentRoom && userRole) {
-    return (
-      <div style={pageStyle}>
-        <div style={cardStyle}>
-          <h2>Sala: {currentRoom.name}</h2>
-          <p>Você entrou como <b>{userRole}</b> com nome <b>{userName}</b>.</p>
-          {/* Aqui vai a interface da sala futuramente */}
-          <button style={{marginTop: 24}} onClick={() => { setCurrentRoom(null); setUserRole(null); setUserName(""); }}>Sair da sala</button>
-        </div>
-      </div>
-    );
-  }
-
+export default function Home() {
   return (
-    <main style={pageStyle}>
-      <div style={cardStyle}>
-        <h1 style={{fontWeight: 700, fontSize: 32, marginBottom: 24, textAlign: 'center'}}>LoreVoice</h1>
-        <CreateRoomForm onCreate={handleCreateRoom} />
-      </div>
-      <div style={{...cardStyle, maxWidth: 600}}>
-        <RoomList rooms={rooms} onJoin={handleJoinRoom} onDelete={handleDeleteRoom} />
-      </div>
-    </main>
+    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
+      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
+        <Image
+          className="dark:invert"
+          src="/next.svg"
+          alt="Next.js logo"
+          width={180}
+          height={38}
+          priority
+        />
+        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
+          <li className="mb-2 tracking-[-.01em]">
+            Get started by editing{" "}
+            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
+              src/app/page.tsx
+            </code>
+            .
+          </li>
+          <li className="tracking-[-.01em]">
+            Save and see your changes instantly.
+          </li>
+        </ol>
+
+        <div className="flex gap-4 items-center flex-col sm:flex-row">
+          <a
+            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
+            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Image
+              className="dark:invert"
+              src="/vercel.svg"
+              alt="Vercel logomark"
+              width={20}
+              height={20}
+            />
+            Deploy now
+          </a>
+          <a
+            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
+            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Read our docs
+          </a>
+        </div>
+      </main>
+      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
+        <a
+          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
+          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Image
+            aria-hidden
+            src="/file.svg"
+            alt="File icon"
+            width={16}
+            height={16}
+          />
+          Learn
+        </a>
+        <a
+          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
+          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Image
+            aria-hidden
+            src="/window.svg"
+            alt="Window icon"
+            width={16}
+            height={16}
+          />
+          Examples
+        </a>
+        <a
+          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
+          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Image
+            aria-hidden
+            src="/globe.svg"
+            alt="Globe icon"
+            width={16}
+            height={16}
+          />
+          Go to nextjs.org →
+        </a>
+      </footer>
+    </div>
   );
 }
