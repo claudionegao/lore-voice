@@ -86,43 +86,50 @@
     };
 
     function updateUserControls() {
-      const container = document.getElementById("users");
-      container.innerHTML = "";
-      for(const uid in remoteUsers){
+    const container = document.getElementById("users");
+    container.innerHTML = "";
+    for (const uid in remoteUsers) {
         const userDiv = document.createElement("div");
         userDiv.className = "user";
         userDiv.textContent = `Usuário: ${uid} `;
 
-        if(role === "narrator"){
-          const btn = document.createElement("button");
-          btn.textContent = listeningState[uid] ? "Remover áudio" : "Dar áudio";
-          const statusSpan = document.createElement("span");
-          statusSpan.textContent = listeningState[uid] ? " [Ouvindo]" : " [Mutado]";
-          statusSpan.className = listeningState[uid] ? "listening" : "muted";
+        // Indicador de volume
+        const volSpan = document.createElement("span");
+        volSpan.className = "volume";
+        volSpan.textContent = "[Volume: 0%]";
+        userDiv.appendChild(volSpan);
 
-          btn.onclick = () => {
-            if(listeningState[uid]){
-              remoteUsers[uid].stop();
-              listeningState[uid] = false;
-            } else {
-              remoteUsers[uid].play();
-              listeningState[uid] = true;
-            }
-            updateUserControls();
-          }
-
-          userDiv.appendChild(btn);
-          userDiv.appendChild(statusSpan);
+        if (role === "narrator") {
+            const btn = document.createElement("button");
+            btn.textContent = remoteUsers[uid].isPlaying() ? "Remover áudio" : "Dar áudio";
+            btn.onclick = () => {
+                if (remoteUsers[uid].isPlaying()) {
+                    remoteUsers[uid].stop();
+                } else {
+                    remoteUsers[uid].play();
+                }
+            };
+            userDiv.appendChild(btn);
         } else {
-          const statusSpan = document.createElement("span");
-          statusSpan.textContent = " [Ouvindo Narrador]";
-          statusSpan.className = "listening";
-          userDiv.appendChild(statusSpan);
+            const statusSpan = document.createElement("span");
+            statusSpan.textContent = " [Ouvindo Narrador]";
+            userDiv.appendChild(statusSpan);
         }
 
         container.appendChild(userDiv);
-      }
+
+        // Atualiza o volume em tempo real
+        const track = remoteUsers[uid];
+        if (track) {
+            const updateVolume = () => {
+                const level = Math.floor(track.getVolumeLevel() * 100);
+                volSpan.textContent = `[Volume: ${level}%]`;
+                requestAnimationFrame(updateVolume);
+            };
+            updateVolume();
+        }
     }
+}
   </script>
 </body>
 </html>
