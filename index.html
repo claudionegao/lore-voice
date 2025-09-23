@@ -62,7 +62,7 @@ let client, localTrack;
 let role = "player";
 let uid = 1;
 const remoteUsers = {};
-const listeningState = {}; // quem ouve o narrador
+const listeningState = {};
 
 const connectionStatus = document.getElementById("connection-status");
 
@@ -86,7 +86,7 @@ document.getElementById("connect").onclick = async () => {
     await client.subscribe(user, mediaType);
     if(mediaType === "audio") {
       remoteUsers[user.uid] = user.audioTrack;
-      listeningState[user.uid] = true; // todos ouvem inicialmente
+      listeningState[user.uid] = true;
       updateUserControls();
     }
   });
@@ -110,9 +110,9 @@ function updateUserControls() {
   const container = document.getElementById("users");
   container.innerHTML = "";
 
-  // mostra narrador primeiro
+  // mostra todos os usuários conectados
   const allUsers = {...remoteUsers};
-  allUsers[uid] = localTrack; // adiciona o próprio usuário na lista
+  allUsers[uid] = localTrack;
 
   for(const userId in allUsers) {
     const track = allUsers[userId];
@@ -131,7 +131,7 @@ function updateUserControls() {
     volBar.appendChild(volFill);
     userDiv.appendChild(volBar);
 
-    // Se narrador, adicionar botão para controlar áudio de outros
+    // Botões de narrador apenas se o cliente atual for narrador
     if(role === "narrator" && userId != uid) {
       const btn = document.createElement("button");
       btn.textContent = listeningState[userId] ? "Remover áudio" : "Dar áudio";
@@ -162,6 +162,5 @@ function updateUserControls() {
   }
 }
 </script>
-
 </body>
 </html>
