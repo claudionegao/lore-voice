@@ -1,135 +1,167 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-  <title>Teste Narrador/Participantes</title>
-  <script src="https://download.agora.io/sdk/release/AgoraRTC_N.js"></script>
-  <style>
-    body { font-family: Arial; margin: 20px; }
-    .user { margin-bottom: 10px; }
-    button { margin-left: 10px; }
-    .listening { color: green; font-weight: bold; }
-    .muted { color: red; font-weight: bold; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lore Voice - Teste Audio</title>
+<script src="https://download.agora.io/sdk/release/AgoraRTC_N.js"></script>
+<style>
+  body { font-family: Arial; margin: 20px; background: #f4f4f9; color: #333; }
+  header { text-align: center; margin-bottom: 20px; }
+  main { max-width: 800px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+  section { margin-bottom: 20px; }
+  input, select, button { margin: 5px; padding: 10px; font-size: 16px; border-radius: 4px; border: 1px solid #ccc; }
+  button { cursor: pointer; background-color: #007bff; color: white; border: none; }
+  button:hover { background-color: #0056b3; }
+  .user { margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+  .volume-bar { width: 100px; height: 10px; background: #ddd; border-radius: 4px; overflow: hidden; }
+  .volume-fill { height: 100%; width: 0%; background: green; transition: width 0.05s; }
+  .status { font-weight: bold; }
+</style>
 </head>
 <body>
-  <h2>Conectar ao canal</h2>
 
-  <input type="text" id="username" placeholder="Nome do usuário" />
-  <select id="role">
-    <option value="narrator">Narrador</option>
-    <option value="player">Jogador</option>
-  </select>
-  <select id="uid">
-    <option value="1">Usuário 1</option>
-    <option value="2">Usuário 2</option>
-    <option value="3">Usuário 3</option>
-  </select>
-  <button id="connect">Conectar</button>
-  <button id="leave">Sair</button>
+<header>
+  <h1>Lore Voice - Teste de Áudio</h1>
+</header>
 
-  <h3>Usuários na sala:</h3>
-  <div id="users"></div>
+<main>
+  <section>
+    <h2>Conectar ao Canal</h2>
+    <input type="text" id="username" placeholder="Digite seu nome">
+    <select id="role">
+      <option value="narrator">Narrador</option>
+      <option value="player">Jogador</option>
+    </select>
+    <select id="uid">
+      <option value="1">Usuário 1</option>
+      <option value="2">Usuário 2</option>
+      <option value="3">Usuário 3</option>
+    </select>
+    <button id="connect">Conectar</button>
+    <button id="leave">Sair</button>
+    <div id="connection-status" class="status">Desconectado</div>
+  </section>
 
-  <script>
-    // App ID via "variável de ambiente" (simulação)
-    const APP_ID = "9b5dc5074e5d4193ad5c4e002fa9270a";
+  <section>
+    <h3>Usuários na sala:</h3>
+    <div id="users"></div>
+  </section>
+</main>
 
-    // Tokens gerados externamente (cada UID tem seu token de 24h)
-    const TOKENS = {
+<script>
+const APP_ID = "9b5dc5074e5d4193ad5c4e002fa9270a";
+const CHANNEL_NAME = "CanalTeste";
+const TOKENS = {
       1: "0069b5dc5074e5d4193ad5c4e002fa9270aIAB2r3p9OfVCHlWcrUOrf0MVPeHKz6eZMLqSgV8ACX68SN3q3qu379yDIgA6p0/WAUPTaAQAAQABQ9NoAgABQ9NoAwABQ9NoBAABQ9No",
       2: "0069b5dc5074e5d4193ad5c4e002fa9270aIAD5rSGA8iLi6vYmrrrttIWo99dVNnpYvXrBb1oI+rIAxN3q3qsNvtUaIgA6p0/WAUPTaAQAAQABQ9NoAgABQ9NoAwABQ9NoBAABQ9No",
       3: "0069b5dc5074e5d4193ad5c4e002fa9270aIABMoKLuCxAeAbG0QHe/MAIi+zqzU2oX2wWsqv4tPcPSud3q3qubjtJtIgA6p0/WAUPTaAQAAQABQ9NoAgABQ9NoAwABQ9NoBAABQ9No"
     };
 
-    const CHANNEL_NAME = "CanalTeste";
-    let client, localTrack;
-    let role = "player";
-    const remoteUsers = {};
-    const listeningState = {}; // quem está ouvindo o narrador
+let client, localTrack;
+let role = "player";
+let uid = 1;
+const remoteUsers = {};
+const listeningState = {}; // quem ouve o narrador
 
-    document.getElementById("connect").onclick = async () => {
-      const username = document.getElementById("username").value;
-      role = document.getElementById("role").value;
-      const uid = Number(document.getElementById("uid").value);
-      if (!username) return alert("Digite o nome do usuário");
+const connectionStatus = document.getElementById("connection-status");
 
-      const token = TOKENS[uid]; // pega token correspondente
+document.getElementById("connect").onclick = async () => {
+  const username = document.getElementById("username").value;
+  role = document.getElementById("role").value;
+  uid = Number(document.getElementById("uid").value);
 
-      client = AgoraRTC.createClient({mode: "rtc", codec: "vp8"});
-      await client.join(APP_ID, CHANNEL_NAME, token, uid);
+  if(!username) return alert("Digite seu nome");
+  const token = TOKENS[uid];
 
-      localTrack = await AgoraRTC.createMicrophoneAudioTrack();
-      await client.publish([localTrack]);
-      console.log(`${username} conectado como ${role} (UID ${uid})`);
+  client = AgoraRTC.createClient({mode: "rtc", codec: "vp8"});
+  await client.join(APP_ID, CHANNEL_NAME, token, uid);
+  localTrack = await AgoraRTC.createMicrophoneAudioTrack();
+  await client.publish([localTrack]);
 
-      client.on("user-published", async (user, mediaType) => {
-        await client.subscribe(user, mediaType);
-        if(mediaType === "audio") {
-          remoteUsers[user.uid] = user.audioTrack;
-          listeningState[user.uid] = true; // assume todos ouvindo inicialmente
-          updateUserControls();
-        }
-      });
+  connectionStatus.textContent = "Conectado";
+  connectionStatus.style.color = "green";
 
-      client.on("user-unpublished", (user) => {
-        delete remoteUsers[user.uid];
-        delete listeningState[user.uid];
-        updateUserControls();
-      });
-    };
-
-    document.getElementById("leave").onclick = async () => {
-      if(localTrack) localTrack.close();
-      await client.leave();
-      console.log("Saiu do canal");
-      document.getElementById("users").innerHTML = "";
-    };
-
-    function updateUserControls() {
-    const container = document.getElementById("users");
-    container.innerHTML = "";
-    for (const uid in remoteUsers) {
-        const userDiv = document.createElement("div");
-        userDiv.className = "user";
-        userDiv.textContent = `Usuário: ${uid} `;
-
-        // Indicador de volume
-        const volSpan = document.createElement("span");
-        volSpan.className = "volume";
-        volSpan.textContent = "[Volume: 0%]";
-        userDiv.appendChild(volSpan);
-
-        if (role === "narrator") {
-            const btn = document.createElement("button");
-            btn.textContent = remoteUsers[uid].isPlaying() ? "Remover áudio" : "Dar áudio";
-            btn.onclick = () => {
-                if (remoteUsers[uid].isPlaying()) {
-                    remoteUsers[uid].stop();
-                } else {
-                    remoteUsers[uid].play();
-                }
-            };
-            userDiv.appendChild(btn);
-        } else {
-            const statusSpan = document.createElement("span");
-            statusSpan.textContent = " [Ouvindo Narrador]";
-            userDiv.appendChild(statusSpan);
-        }
-
-        container.appendChild(userDiv);
-
-        // Atualiza o volume em tempo real
-        const track = remoteUsers[uid];
-        if (track) {
-            const updateVolume = () => {
-                const level = Math.floor(track.getVolumeLevel() * 100);
-                volSpan.textContent = `[Volume: ${level}%]`;
-                requestAnimationFrame(updateVolume);
-            };
-            updateVolume();
-        }
+  client.on("user-published", async (user, mediaType) => {
+    await client.subscribe(user, mediaType);
+    if(mediaType === "audio") {
+      remoteUsers[user.uid] = user.audioTrack;
+      listeningState[user.uid] = true; // todos ouvem inicialmente
+      updateUserControls();
     }
+  });
+
+  client.on("user-unpublished", (user) => {
+    delete remoteUsers[user.uid];
+    delete listeningState[user.uid];
+    updateUserControls();
+  });
+};
+
+document.getElementById("leave").onclick = async () => {
+  if(localTrack) localTrack.close();
+  await client.leave();
+  connectionStatus.textContent = "Desconectado";
+  connectionStatus.style.color = "red";
+  document.getElementById("users").innerHTML = "";
+};
+
+function updateUserControls() {
+  const container = document.getElementById("users");
+  container.innerHTML = "";
+
+  // mostra narrador primeiro
+  const allUsers = {...remoteUsers};
+  allUsers[uid] = localTrack; // adiciona o próprio usuário na lista
+
+  for(const userId in allUsers) {
+    const track = allUsers[userId];
+    const userDiv = document.createElement("div");
+    userDiv.className = "user";
+
+    const nameSpan = document.createElement("span");
+    nameSpan.textContent = userId == uid ? `(Você) UID ${userId}` : `UID ${userId}`;
+    userDiv.appendChild(nameSpan);
+
+    // Barra de volume
+    const volBar = document.createElement("div");
+    volBar.className = "volume-bar";
+    const volFill = document.createElement("div");
+    volFill.className = "volume-fill";
+    volBar.appendChild(volFill);
+    userDiv.appendChild(volBar);
+
+    // Se narrador, adicionar botão para controlar áudio de outros
+    if(role === "narrator" && userId != uid) {
+      const btn = document.createElement("button");
+      btn.textContent = listeningState[userId] ? "Remover áudio" : "Dar áudio";
+      btn.onclick = () => {
+        if(listeningState[userId]){
+          remoteUsers[userId].stop();
+          listeningState[userId] = false;
+        } else {
+          remoteUsers[userId].play();
+          listeningState[userId] = true;
+        }
+      };
+      userDiv.appendChild(btn);
+    }
+
+    container.appendChild(userDiv);
+
+    // Atualiza volume em tempo real
+    const updateVolume = () => {
+      let level = 0;
+      try {
+        level = Math.floor(track.getVolumeLevel() * 100);
+      } catch(e){}
+      volFill.style.width = level + "%";
+      requestAnimationFrame(updateVolume);
+    };
+    updateVolume();
+  }
 }
-  </script>
+</script>
+
 </body>
 </html>
