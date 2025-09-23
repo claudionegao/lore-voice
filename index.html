@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Teste Narrador/Participantes</title>
+  <script src="https://download.agora.io/sdk/release/AgoraRTC_N.js"></script>
+  <style>
+    body { font-family: Arial; margin: 20px; }
+    .user { margin-bottom: 10px; }
+    button { margin-left: 10px; }
+    .listening { color: green; font-weight: bold; }
+    .muted { color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>Conectar ao canal</h2>
+
+  <input type="text" id="username" placeholder="Nome do usuário" />
+  <select id="role">
+    <option value="narrator">Narrador</option>
+    <option value="player">Jogador</option>
+  </select>
+  <select id="uid">
+    <option value="1">Usuário 1</option>
+    <option value="2">Usuário 2</option>
+    <option value="3">Usuário 3</option>
+  </select>
+  <button id="connect">Conectar</button>
+  <button id="leave">Sair</button>
+
+  <h3>Usuários na sala:</h3>
+  <div id="users"></div>
+
+  <script>
+    // App ID via "variável de ambiente" (simulação)
+    const APP_ID = "9b5dc5074e5d4193ad5c4e002fa9270a";
+
+    // Tokens gerados externamente (cada UID tem seu token de 24h)
+    const TOKENS = {
+      1: "0069b5dc5074e5d4193ad5c4e002fa9270aIAB2r3p9OfVCHlWcrUOrf0MVPeHKz6eZMLqSgV8ACX68SN3q3qu379yDIgA6p0/WAUPTaAQAAQABQ9NoAgABQ9NoAwABQ9NoBAABQ9No",
+      2: "0069b5dc5074e5d4193ad5c4e002fa9270aIAD5rSGA8iLi6vYmrrrttIWo99dVNnpYvXrBb1oI+rIAxN3q3qsNvtUaIgA6p0/WAUPTaAQAAQABQ9NoAgABQ9NoAwABQ9NoBAABQ9No",
+      3: "0069b5dc5074e5d4193ad5c4e002fa9270aIABMoKLuCxAeAbG0QHe/MAIi+zqzU2oX2wWsqv4tPcPSud3q3qubjtJtIgA6p0/WAUPTaAQAAQABQ9NoAgABQ9NoAwABQ9NoBAABQ9No"
+    };
+
+    const CHANNEL_NAME = "CanalTeste";
+    let client, localTrack;
+    let role = "player";
+    const remoteUsers = {};
+    const listeningState = {}; // quem está ouvindo o narrador
+
+    document.getElementById("connect").onclick = async () => {
+      const username = document.getElementById("username").value;
+      role = document.getElementById("role").value;
+      const uid = Number(document.getElementById("uid").value);
+      if (!username) return alert("Digite o nome do usuário");
+
+      const token = TOKENS[uid]; // pega token correspondente
+
+      client = AgoraRTC.createClient({mode: "rtc", codec: "vp8"});
+      await client.join(APP_ID, CHANNEL_NAME, token, uid);
+
+      localTrack = await AgoraRTC.createMicrophoneAudioTrack();
+      await client.publish([localTrack]);
+      console.log(`${username} conectado como ${role} (UID ${uid})`);
+
+      client.on("user-published", async (user, mediaType) => {
+        await client.subscribe(user, mediaType);
+        if(mediaType === "audio") {
+          remoteUsers[user.uid] = user.audioTrack;
+          listeningState[user.uid] = true; // assume todos ouvindo inicialmente
+          updateUserControls();
+        }
+      });
+
+      client.on("user-unpublished", (user) => {
+        delete remoteUsers[user.uid];
+        delete listeningState[user.uid];
+        updateUserControls();
+      });
+    };
+
+    document.getElementById("leave").onclick = async () => {
+      if(localTrack) localTrack.close();
+      await client.leave();
+      console.log("Saiu do canal");
+      document.getElementById("users").innerHTML = "";
+    };
+
+    function updateUserControls() {
+      const container = document.getElementById("users");
+      container.innerHTML = "";
+      for(const uid in remoteUsers){
+        const userDiv = document.createElement("div");
+        userDiv.className = "user";
+        userDiv.textContent = `Usuário: ${uid} `;
+
+        if(role === "narrator"){
+          const btn = document.createElement("button");
+          btn.textContent = listeningState[uid] ? "Remover áudio" : "Dar áudio";
+          const statusSpan = document.createElement("span");
+          statusSpan.textContent = listeningState[uid] ? " [Ouvindo]" : " [Mutado]";
+          statusSpan.className = listeningState[uid] ? "listening" : "muted";
+
+          btn.onclick = () => {
+            if(listeningState[uid]){
+              remoteUsers[uid].stop();
+              listeningState[uid] = false;
+            } else {
+              remoteUsers[uid].play();
+              listeningState[uid] = true;
+            }
+            updateUserControls();
+          }
+
+          userDiv.appendChild(btn);
+          userDiv.appendChild(statusSpan);
+        } else {
+          const statusSpan = document.createElement("span");
+          statusSpan.textContent = " [Ouvindo Narrador]";
+          statusSpan.className = "listening";
+          userDiv.appendChild(statusSpan);
+        }
+
+        container.appendChild(userDiv);
+      }
+    }
+  </script>
+</body>
+</html>
