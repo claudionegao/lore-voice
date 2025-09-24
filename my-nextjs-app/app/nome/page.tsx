@@ -258,3 +258,10 @@ export default function NomePage() {
     </div>
   );
 }
+export default function NomePageWrapper() {
+  return (
+    <Suspense fallback={<div>Carregando...</div>}>
+      <NomePage />
+    </Suspense>
+  );
+}
