@@ -1,6 +1,6 @@
-"use client";
+import React, { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 
 // Simula usuários e papéis
 const usuariosMock = [
@@ -8,7 +8,7 @@ const usuariosMock = [
   { nome: "Bob", papel: "narrador" },
 ];
 
-export default function NomePage() {
+const NomePage = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const nome = searchParams.get('nome') || '';
@@ -21,12 +21,10 @@ export default function NomePage() {
       : [...usuariosMock, { nome, papel: "jogador" }];
   });
 
-  // Estado do papel do usuário atual
   const papelAtual = usuarios.find(u => u.nome === nome)?.papel === "narrador" ? "narrador" : "jogador";
   const [papel, setPapel] = useState<"narrador" | "jogador">(papelAtual);
   const [selecionados, setSelecionados] = useState<string[]>([]);
 
-  // Simula volumes aleatórios para cada usuário
   const [volumes] = useState<{ [nome: string]: number }>(() =>
     Object.fromEntries(usuarios.map(u => [u.nome, Math.floor(Math.random() * 100) + 1]))
   );
@@ -43,7 +41,6 @@ export default function NomePage() {
     );
   }
 
-  // Atualiza o papel do usuário atual e move para a categoria correta
   function handlePapelChange(novoPapel: "narrador" | "jogador") {
     setPapel(novoPapel);
     setUsuarios(prev =>
@@ -53,11 +50,9 @@ export default function NomePage() {
     );
   }
 
-  // Agrupa usuários por papel
   const narradores = usuarios.filter(u => u.papel === "narrador");
   const jogadores = usuarios.filter(u => u.papel === "jogador");
 
-  // Componente da barra de volume gráfica
   function VolumeBar({ value }: { value: number }) {
     return (
       <div style={{
@@ -257,7 +252,8 @@ export default function NomePage() {
       </div>
     </div>
   );
-}
+};
+
 export default function NomePageWrapper() {
   return (
     <Suspense fallback={<div>Carregando...</div>}>
