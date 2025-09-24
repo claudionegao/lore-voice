@@ -250,9 +250,6 @@ export default function NomePage() {
           boxSizing: "border-box",
         }}
       >
-        <div style={{ fontWeight: 600, marginBottom: 8, color: "#b3b3cc" }}>
-          Usuários:
-        </div>
         <div style={{ marginBottom: 10, color: "#a5b4fc", fontWeight: 500 }}>Narradores</div>
         {renderUserList(narradores)}
         <div style={{ margin: "18px 0 10px 0", color: "#a5b4fc", fontWeight: 500 }}>Jogadores</div>
