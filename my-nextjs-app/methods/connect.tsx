@@ -29,10 +29,12 @@ export async function entradaUsuario(nome: string, tipo: string) {
     console.error("❌ Erro ao conectar:", error);
   }
 // serializar retorno de fetch
-  const users = await listarUsuariosConectados();
-  const user = await getuserinfo(rtcClient.uid);
-  console.log("User info:", user);
-  console.log("Usuários conectados:", users);
+  const response = await listarUsuariosConectados();
+  const users = response.data.broadcasters
+  users.forEach(async (user:any) => {
+    const data = await getuserinfo(user)
+    console.log(data);
+  });
   
   const usuariosConectados = new Set();
 
@@ -45,7 +47,8 @@ export async function entradaUsuario(nome: string, tipo: string) {
     usuariosConectados.delete(user.uid);
     console.log("Conectados agora:", Array.from(usuariosConectados));
   });
-
+  //disconnect from channel
+  rtcClient.leave();
 }
 
 export const fetchToken = async (uid: string) => {
