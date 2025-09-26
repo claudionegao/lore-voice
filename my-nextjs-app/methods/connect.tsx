@@ -1,12 +1,12 @@
 // my-nextjs-app/app/methods/connect.tsx
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import AgoraRTC from 'agora-rtc-sdk-ng';
 
 let rtcClient: any;
 
 
 export async function entradaUsuario(nome: string, tipo: string) {
+  const AgoraRTC = (await import('agora-rtc-sdk-ng')).default;
   // Aqui você pode validar, salvar, conectar, etc.
   const res = await fetch(`/api/token?uid=${nome}`);
   const data = await res.json();
