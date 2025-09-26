@@ -32,6 +32,7 @@ export async function entradaUsuario(nome: string, tipo: string) {
   const users = await listarUsuariosConectados();
   const user = await getuserinfo(rtcClient.uid);
   console.log("User info:", user);
+  console.log("Usuários conectados:", users);
   
   const usuariosConectados = new Set();
 
