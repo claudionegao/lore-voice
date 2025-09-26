@@ -22,5 +22,5 @@ export async function listarUsuariosConectados() {
   }
 
   const data = await response.json();
-  return data.data?.users || [];
+  return data;
 }

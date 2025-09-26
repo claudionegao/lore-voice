@@ -26,10 +26,10 @@ export async function entradaUsuario(nome: string, tipo: string) {
     console.clear();
     console.error("❌ Erro ao conectar:", error);
   }
-
+// serializar retorno de fetch
   const users = await listarUsuariosConectados();
   console.clear();
-  console.log("Usuários atualmente conectados:", await users.json());
+  console.log("Usuários atualmente conectados:", users);
   
   const usuariosConectados = new Set();
 
