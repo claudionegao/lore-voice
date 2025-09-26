@@ -7,7 +7,7 @@ import { listarUsuariosConectados,getuserinfo } from "./userlist";
 let rtcClient: any;
 
 
-export async function entradaUsuario(nome: string, tipo: string) {
+export async function entradaUsuario(nome: string, tipo: string, setuserlist: (userlist: number[]) => void) {
   const AgoraRTC = (await import('agora-rtc-sdk-ng')).default;
   // Aqui você pode validar, salvar, conectar, etc.
   const res = await fetch(`/api/token?uid=${nome}`);
@@ -35,18 +35,18 @@ export async function entradaUsuario(nome: string, tipo: string) {
     const data = await getuserinfo(user)
     console.log(data);
   });
-  
-  const usuariosConectados = new Set();
 
-  rtcClient.on("user-published", async (user: any, mediaType: "audio" | "video") => {
-    usuariosConectados.add(user.uid);
-    console.log("Conectados agora:", Array.from(usuariosConectados));
-  });
+rtcClient.on("user-published", (user: any) => {
+  const useruid = user.uid;
+  //setuserlist(prev => prev.includes(useruid) ? prev : [...prev, useruid]);
+});
 
-  rtcClient.on("user-unpublished", (user: any) => {
-    usuariosConectados.delete(user.uid);
-    console.log("Conectados agora:", Array.from(usuariosConectados));
-  });
+rtcClient.on("user-unpublished", (user: any) => {
+  const useruid = user.uid;
+  //setuserlist(prev => prev.filter(uid => uid !== useruid));
+});
+
+
   //disconnect from channel
   rtcClient.leave();
 }

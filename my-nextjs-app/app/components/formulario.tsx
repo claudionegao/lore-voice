@@ -5,7 +5,7 @@ import { useState } from "react";
 import { entradaUsuario } from "../../methods/connect";
 
 export default function Formulario() {
-  const { setNome, setTipo } = useUser();
+  const { setNome, setTipo,setuserlist } = useUser();
 
   const [inputNome, setInputNome] = useState("");
   const [inputTipo, setInputTipo] = useState("Jogador"); // 👈 valor inicial
@@ -14,7 +14,7 @@ export default function Formulario() {
     e.preventDefault();
     setNome(inputNome);
     setTipo(inputTipo);
-    entradaUsuario(inputNome, inputTipo);
+    entradaUsuario(inputNome, inputTipo,setuserlist);
   }
 
   return (

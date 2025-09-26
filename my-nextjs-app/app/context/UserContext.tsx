@@ -6,8 +6,10 @@ import { createContext, useContext, useState, ReactNode } from "react";
 type UserContextType = {
   nome: string;
   tipo: string;
+  userlist: number[];
   setNome: (nome: string) => void;
   setTipo: (tipo: string) => void;
+  setuserlist: React.Dispatch<React.SetStateAction<number[]>>;
 };
 
 // 2️⃣ Cria o contexto com valor inicial undefined
@@ -17,9 +19,10 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export function UserProvider({ children }: { children: ReactNode }) {
   const [nome, setNome] = useState("");
   const [tipo, setTipo] = useState("");
+  const [userlist, setuserlist] = useState<number[]>([]);
 
   return (
-    <UserContext.Provider value={{ nome, tipo, setNome, setTipo }}>
+    <UserContext.Provider value={{ nome, tipo,userlist, setNome, setTipo,setuserlist }}>
       {children}
     </UserContext.Provider>
   );
