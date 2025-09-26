@@ -4,14 +4,13 @@ export async function listarUsuariosConectados() {
   const customerId = process.env.AGORA_API_KEY!;
   const customerSecret = process.env.AGORA_API_SECRET!;
 
-  const plainCredential = customerId + ":" + customerSecret
-    const encodedCredential = Buffer.from(plainCredential).toString('base64')
-    const authorizationField = "Basic " + encodedCredential
+  
+  const auth = process.env.AGORA_API_AUTH!;
 
   const response = await fetch(`https://api.agora.io/dev/v1/channel/user/${appId}/${channelName}`, {
     method: 'GET',
     headers: {
-      'Authorization': authorizationField,
+      'Authorization': `Basic ${auth}`,
       'Accept': 'application/json'
     }
   });
