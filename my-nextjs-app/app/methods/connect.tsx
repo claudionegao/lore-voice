@@ -1,5 +1,5 @@
 // my-nextjs-app/app/methods/connect.tsx
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import AgoraRTC from 'agora-rtc-sdk-ng';
 
 let rtcClient: any;
@@ -38,3 +38,4 @@ export const fetchToken = async (uid: string) => {
   const data = await res.json();
   return data.token;
 };
+/* eslint-enable @typescript-eslint/no-explicit-any */
