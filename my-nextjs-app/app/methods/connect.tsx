@@ -1,5 +1,6 @@
 // my-nextjs-app/app/methods/connect.tsx
 /* eslint-disable @typescript-eslint/no-explicit-any */
+"use client";
 import AgoraRTC from 'agora-rtc-sdk-ng';
 
 let rtcClient: any;

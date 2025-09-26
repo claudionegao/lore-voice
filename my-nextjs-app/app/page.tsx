@@ -1,5 +1,3 @@
-'use client';
-
 import Formulario from "./components/formulario";
 import { UserProvider } from "./context/UserContext";
 
