@@ -15,6 +15,8 @@ export async function entradaUsuario(nome: string, tipo: string) {
   const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
   rtcClient = AgoraRTC.createClient({ mode: 'live', codec: 'vp8' });
   await rtcClient.setClientRole('host');
+  console.log("Conectando como:", nome, "Tipo:", tipo);
+  console.log("Token recebido:", token);
   await rtcClient.join(appId, channelName, token, nome);
   const localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
   await rtcClient.publish([localAudioTrack]);
