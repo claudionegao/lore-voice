@@ -2,7 +2,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { listarUsuariosConectados } from "./userlist";
+import { get } from "http";
+import { listarUsuariosConectados,getuserinfo } from "./userlist";
 let rtcClient: any;
 
 
@@ -29,8 +30,8 @@ export async function entradaUsuario(nome: string, tipo: string) {
   }
 // serializar retorno de fetch
   const users = await listarUsuariosConectados();
-  console.clear();
-  console.log("Usuários atualmente conectados:", users);
+  const user = await getuserinfo(rtcClient.uid);
+  console.log("User info:", user);
   
   const usuariosConectados = new Set();
 
