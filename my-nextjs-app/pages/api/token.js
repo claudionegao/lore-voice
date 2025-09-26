@@ -1,5 +1,5 @@
 // my-nextjs-app/pages/api/token.js
-import { RtcTokenBuilder, RtcRole } from 'agora-token';
+import { RtcTokenBuilder, RtcRole } from 'agora-access-token';
 
 export default function handler(req, res) {
   const { uid } = req.query;
