@@ -12,14 +12,19 @@ export async function entradaUsuario(nome: string, tipo: string) {
   const data = await res.json();
     const channelName = 'LoreVoice';
   const token = data.token;
-  const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
+  const appId = process.env.NEXT_PUBLIC_AGORA_APP_I!;
   rtcClient = AgoraRTC.createClient({ mode: 'live', codec: 'vp8' });
   await rtcClient.setClientRole('host');
-  console.log("Conectando como:", nome, "Tipo:", tipo);
-  console.log("Token recebido:", token);
-  await rtcClient.join(appId, channelName, token, nome);
-  const localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-  await rtcClient.publish([localAudioTrack]);
+  try {
+    await rtcClient.join(appId, channelName, token, nome);
+    const localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+    await rtcClient.publish([localAudioTrack]);
+
+    console.log(`✅ ${nome} conectado com sucesso ao canal "${channelName}" como ${tipo}`);
+  } catch (error) {
+    console.error("❌ Erro ao conectar:", error);
+  }
+
 
   
   const usuariosConectados = new Set();
