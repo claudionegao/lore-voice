@@ -1,12 +1,13 @@
-import Titulo from "./components/titulo";
-import Botao from "./components/button";
+import Formulario from "./components/formulario";
+import { UserProvider } from "./context/UserContext";
 
 export default function Home() {
   return (
-    <div>
-      <h1>Hello, Next.js!</h1>
-      <Titulo />
-      <Botao />
+    <div className="flex items-center justify-center min-h-screen">
+      <UserProvider>
+        <Formulario />
+      </UserProvider>
     </div>
+
   );
 }
