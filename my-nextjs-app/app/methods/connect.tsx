@@ -1,7 +1,6 @@
 // my-nextjs-app/app/methods/connect.tsx
 
 import AgoraRTC from 'agora-rtc-sdk-ng';
-import IRemoteUser, {IRemoteAudioTrack, IAgoraRTCClient } from 'agora-rtc-sdk-ng'
 
 let rtcClient: any;
 
@@ -22,12 +21,12 @@ export async function entradaUsuario(nome: string, tipo: string) {
   
   const usuariosConectados = new Set();
 
-  rtcClient.on("user-published", async (user: typeof IRemoteUser, mediaType: "audio" | "video") => {
+  rtcClient.on("user-published", async (user: any, mediaType: "audio" | "video") => {
     usuariosConectados.add(user.uid);
     console.log("Conectados agora:", Array.from(usuariosConectados));
   });
 
-  rtcClient.on("user-unpublished", (user) => {
+  rtcClient.on("user-unpublished", (user: any) => {
     usuariosConectados.delete(user.uid);
     console.log("Conectados agora:", Array.from(usuariosConectados));
   });
