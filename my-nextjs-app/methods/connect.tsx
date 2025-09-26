@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import { listarUsuariosConectados } from "./userlist";
 let rtcClient: any;
 
 
@@ -19,13 +20,16 @@ export async function entradaUsuario(nome: string, tipo: string) {
     await rtcClient.join(appId, channelName, token, nome);
     const localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
     await rtcClient.publish([localAudioTrack]);
-
+    console.clear();
     console.log(`✅ ${nome} conectado com sucesso ao canal "${channelName}" como ${tipo}`);
   } catch (error) {
+    console.clear();
     console.error("❌ Erro ao conectar:", error);
   }
 
-
+  const users = await listarUsuariosConectados();
+  console.clear();
+  console.log("Usuários atualmente conectados:", users);
   
   const usuariosConectados = new Set();
 
