@@ -5,7 +5,7 @@ export async function listarUsuariosConectados() {
   const customerSecret = process.env.AGORA_API_SECRET!;
 
   
-  const auth = process.env.AGORA_API_AUTH!;
+  const auth = process.env.NEXT_PUBLICAGORA_API_AUTH!;
 
   const response = await fetch(`https://api.agora.io/dev/v1/channel/user/${appId}/${channelName}`, {
     method: 'GET',
