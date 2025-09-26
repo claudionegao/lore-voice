@@ -5,7 +5,7 @@ export async function listarUsuariosConectados() {
   const customerSecret = process.env.AGORA_API_SECRET!;
 
   
-  const auth = process.env.NEXT_PUBLICAGORA_API_AUTH!;
+  const auth = process.env.NEXT_PUBLIC_AGORA_API_AUTH!;
   console.clear();
   console.log("Auth:", auth);
 
