@@ -18,10 +18,11 @@ export async function entradaUsuario(nome: string, tipo: string) {
   await rtcClient.setClientRole('host');
   try {
     await rtcClient.join(appId, channelName, token, nome);
+    const uidReal = rtcClient.uid;
     const localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
     await rtcClient.publish([localAudioTrack]);
     console.clear();
-    console.log(`✅ ${nome} conectado com sucesso ao canal "${channelName}" como ${tipo}`);
+    console.log(`✅ ${nome}(${uidReal}) conectado com sucesso ao canal "${channelName}" como ${tipo}`);
   } catch (error) {
     console.clear();
     console.error("❌ Erro ao conectar:", error);
