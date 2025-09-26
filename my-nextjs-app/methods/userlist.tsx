@@ -6,8 +6,6 @@ export async function listarUsuariosConectados() {
 
   
   const auth = process.env.NEXT_PUBLIC_AGORA_API_AUTH!;
-  console.clear();
-  console.log("Auth:", auth);
 
   const response = await fetch(`https://api.agora.io/dev/v1/channel/user/${appId}/${channelName}`, {
     method: 'GET',
@@ -32,8 +30,6 @@ export async function getuserinfo(userid:string) {
 
   
   const auth = process.env.NEXT_PUBLIC_AGORA_API_AUTH!;
-  console.clear();
-  console.log("Auth:", auth);
 
   const response = await fetch(`https://api.agora.io/dev/v1/channel/user/property/${appId}/${userid}/${channelName}`, {
     method: 'GET',
