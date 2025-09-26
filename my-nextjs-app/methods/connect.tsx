@@ -12,7 +12,7 @@ export async function entradaUsuario(nome: string, tipo: string) {
   const data = await res.json();
     const channelName = 'LoreVoice';
   const token = data.token;
-  const appId = process.env.NEXT_PUBLIC_AGORA_APP_I!;
+  const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
   rtcClient = AgoraRTC.createClient({ mode: 'live', codec: 'vp8' });
   await rtcClient.setClientRole('host');
   try {
