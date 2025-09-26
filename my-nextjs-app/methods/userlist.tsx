@@ -1,5 +1,5 @@
 export async function listarUsuariosConectados() {
-  const appId = process.env.AGORA_APP_ID!;
+  const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
   const channelName = 'LoreVoice';
   const customerId = process.env.AGORA_API_KEY!;
   const customerSecret = process.env.AGORA_API_SECRET!;
