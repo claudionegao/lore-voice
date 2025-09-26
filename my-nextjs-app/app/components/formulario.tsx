@@ -2,7 +2,7 @@
 
 import { useUser } from "../context/UserContext";
 import { useState } from "react";
-import { entradaUsuario } from "../methods/connect";
+import { entradaUsuario } from "../../methods/connect";
 
 export default function Formulario() {
   const { setNome, setTipo } = useUser();
