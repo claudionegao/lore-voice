@@ -29,7 +29,7 @@ export async function entradaUsuario(nome: string, tipo: string) {
 
   const users = await listarUsuariosConectados();
   console.clear();
-  console.log("Usuários atualmente conectados:", users);
+  console.log("Usuários atualmente conectados:", await users.json());
   
   const usuariosConectados = new Set();
 
