@@ -2,9 +2,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { get } from "http";
-import { listarUsuariosConectados,getuserinfo } from "./userlist";
-import { atualizarListaUsuarios } from "./updatelist";
+import atualizarListaUsuarios from './updatelist';
+import { listarUsuariosConectados } from './userlist';
+
 let rtcClient: any;
 
 
@@ -23,15 +23,13 @@ export async function entradaUsuario(nome: string, tipo: string, setuserlist: (u
     const uidReal = rtcClient.uid;
     const localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
     await rtcClient.publish([localAudioTrack]);
-    console.clear();
     console.log(`✅ ${nome}(${uidReal}) conectado com sucesso ao canal "${channelName}" como ${tipo}`);
   } catch (error) {
     console.clear();
     console.error("❌ Erro ao conectar:", error);
   }
+  console.log(await atualizarListaUsuarios())
 // serializar retorno de fetch
-  const result = await atualizarListaUsuarios();
-  console.log(result);
 
 rtcClient.on("user-published", (user: any) => {
   const useruid = user.uid;

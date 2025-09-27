@@ -1,7 +1,7 @@
-//por meio do userlist e getuserinfo criar um componente UL com a lista atualizada dos usuarios conectados no canal
+//my-nextjs-app/methods/updatelist.tsx
 import { listarUsuariosConectados, getuserinfo } from './userlist';
 
-export async function atualizarListaUsuarios() {
+export default async function atualizarListaUsuarios() {
   try {
     const usuarios = (await listarUsuariosConectados()).data.broadcasters;
     //com a variavel usuarios temos uma array com o uid dos usuarios conectados percorrer ela e usar getuserinfo para criar uma array de objetos com as informaçoes dos usuarios usar foreach
