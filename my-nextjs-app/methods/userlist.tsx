@@ -44,5 +44,5 @@ export async function getuserinfo(userid:string) {
   }
 
   const data = await response.json();
-  return data;
+  return data.data;
 }

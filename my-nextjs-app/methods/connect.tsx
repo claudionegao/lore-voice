@@ -4,6 +4,7 @@
 
 import { get } from "http";
 import { listarUsuariosConectados,getuserinfo } from "./userlist";
+import { atualizarListaUsuarios } from "./updatelist";
 let rtcClient: any;
 
 
@@ -29,12 +30,8 @@ export async function entradaUsuario(nome: string, tipo: string, setuserlist: (u
     console.error("❌ Erro ao conectar:", error);
   }
 // serializar retorno de fetch
-  const response = await listarUsuariosConectados();
-  const users = response.data.broadcasters
-  users.forEach(async (user:any) => {
-    const data = await getuserinfo(user)
-    console.log(data);
-  });
+  const result = await atualizarListaUsuarios();
+  console.log(result);
 
 rtcClient.on("user-published", (user: any) => {
   const useruid = user.uid;
