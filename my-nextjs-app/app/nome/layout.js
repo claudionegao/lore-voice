@@ -5,7 +5,7 @@ export const metadata = {
 export default function NomeLayout({
   children,
 }, {
-  children: React.ReactNode
+  children
 }) {
   return children;
 }
