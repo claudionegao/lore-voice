@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useContext } from '../context/UserContext';
-import AgoraRTC from 'agora-rtc-sdk-ng';
+import AgoraRTC { microphoneTrack } from 'agora-rtc-sdk-ng';
 
 const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID;
 
@@ -15,31 +15,15 @@ const NameForm = () => {
     function handleSubmit(e) {
         e.preventDefault();
         const user = {nome=name,id=0,skill="jogador"}
-        useEffect(() => {
-            const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
-            setClient(client);
-            console.log('a')
-
-            const joinChannel = async () => {
-                const token = null; // ou seu token se tiver
-                const channel = 'LoreVoice';
-
-                await client.join(appId, channel, token, name);
-
-                const [microphoneTrack, cameraTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
-
-                setLocalAudioTrack(microphoneTrack);
-                setLocalVideoTrack(cameraTrack);
-
-                await client.publish([microphoneTrack, cameraTrack]);
-
-                console.log('Entrou na sala e publicou os streams');
-            };
-            if (name.trim()) {
-                router.push(`/nome?nome=${encodeURIComponent(name)}`);
-            };
+        const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+        setClient(client);
+        const token = null; // ou seu token se tiver
+        const channel = 'LoreVoice';
+        await client.join(appId, channel, token, name);
+        const microphoneTrack = await AgoraRTC.createMicrophoneAudioTrack();
+        await client.publish([microphoneTrack]);
+        router.push(`/nome?nome=${encodeURIComponent(name)}`);
         };
-    }
     return (
         <form onSubmit={handleSubmit} className="flex flex-col items-center gap-4 p-6 bg-white rounded-lg shadow-md max-w-sm mx-auto">
             <label htmlFor="name" className="text-lg font-semibold text-gray-700">Qual seu nome?</label>
