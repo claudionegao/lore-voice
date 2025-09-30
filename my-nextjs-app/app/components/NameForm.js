@@ -1,7 +1,7 @@
 "use client";
 import React, { useState , useContext } from 'react';
 import { useRouter } from 'next/navigation';
-import {UserProvider}   from '../context/UserContext';
+import {UserContext}   from '../context/UserContext';
 
 const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID;
 
@@ -9,7 +9,7 @@ const NameForm = () => {
     const [name, setName] = useState('');
     const [AgoraRTC, setAgoraRTC] = useState(null);
     const router = useRouter();
-    const { user, setUsers, _client, _setClient } = useContext(UserProvider);
+    const { user, setUsers, _client, _setClient } = useContext(UserContext);
     const AgoraClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
     useEffect(() => {
     import('agora-rtc-sdk-ng').then((mod) => {
