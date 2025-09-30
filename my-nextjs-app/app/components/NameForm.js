@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useContext } from '../context/UserContext';
+import { UserContext } from '../context/UserContext';
 import AgoraRTC ,{ microphoneTrack } from 'agora-rtc-sdk-ng';
 
 const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID;
