@@ -14,7 +14,7 @@ const NameForm = () => {
     setClient(AgoraClient);
     async function handleSubmit(e) {
         e.preventDefault();
-        const user = {nome=name,id=0,skill="jogador"}
+        const user = {nome:name,id:0,skill:"jogador"}
         const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
         setClient(client);
         const token = null; // ou seu token se tiver
