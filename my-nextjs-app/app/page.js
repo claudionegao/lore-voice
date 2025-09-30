@@ -1,5 +1,5 @@
 import NameForm from './components/NameForm';
-importa useContext from './context/UserContext';
+importa {useContext} from './context/UserContext';
 
 export default function Home() {
   return (
