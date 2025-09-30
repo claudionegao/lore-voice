@@ -15,7 +15,7 @@ const NameForm = () => {
         setAgoraRTC(mod.default);
     });
     }, []);
-    _setClient(AgoraClient);
+    _setClient(AgoraRTC);
     async function handleSubmit(e) {
         e.preventDefault();
         if (!AgoraRTC) return;
