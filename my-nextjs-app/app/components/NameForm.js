@@ -12,7 +12,7 @@ const NameForm = () => {
     const { user, setUsers, _client, _setClient } = useContext();
     const AgoraClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
     setClient(AgoraClient);
-    function handleSubmit(e) {
+    async function handleSubmit(e) {
         e.preventDefault();
         const user = {nome=name,id=0,skill="jogador"}
         const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
