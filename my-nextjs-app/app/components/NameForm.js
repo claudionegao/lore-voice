@@ -18,6 +18,7 @@ const NameForm = () => {
         useEffect(() => {
             const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
             setClient(client);
+            console.log('a')
 
             const joinChannel = async () => {
                 const token = null; // ou seu token se tiver
