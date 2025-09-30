@@ -1,13 +1,18 @@
 "use client";
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useContext } from '../context/UserContext';
+import AgoraRTC from 'agora-rtc-sdk-ng';
 
-const NameForm: React.FC = () => {
+const NameForm = () => {
     const [name, setName] = useState('');
     const router = useRouter();
+    const { user, setUsers } = useContext();
 
-    function handleSubmit(e: React.FormEvent) {
+    function handleSubmit(e) {
         e.preventDefault();
+        const user = {nome=name,id=0,skill="jogador"}
+
         if (name.trim()) {
             router.push(`/nome?nome=${encodeURIComponent(name)}`);
         }

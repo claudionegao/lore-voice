@@ -3,6 +3,7 @@
 import React, { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { NOMEM } from 'dns';
 
 // Simula usuários e papéis
 const usuariosMock = [
@@ -25,9 +26,9 @@ const NomePage = () => {
 
   const papelAtual = usuarios.find(u => u.nome === nome)?.papel === "narrador" ? "narrador" : "jogador";
   const [papel, setPapel] = useState<"narrador" | "jogador">(papelAtual);
-  const [selecionados, setSelecionados] = useState<string[]>([]);
+  const [selecionados, setSelecionados] = useState<string[any]>([]);
 
-  const [volumes] = useState<{ [nome: string]: number }>(() =>
+  const [volumes] = useState<{ [NOMEM]: any}>(() =>
     Object.fromEntries(usuarios.map(u => [u.nome, Math.floor(Math.random() * 100) + 1]))
   );
 
@@ -35,7 +36,7 @@ const NomePage = () => {
     router.replace("/");
   }
 
-  function handleCheckbox(usuario: string) {
+  function handleCheckbox(usuario) {
     setSelecionados((prev) =>
       prev.includes(usuario)
         ? prev.filter((u) => u !== usuario)
@@ -43,7 +44,7 @@ const NomePage = () => {
     );
   }
 
-  function handlePapelChange(novoPapel: "narrador" | "jogador") {
+  function handlePapelChange(novoPapel) {
     setPapel(novoPapel);
     setUsuarios(prev =>
       prev.map(u =>
@@ -55,7 +56,7 @@ const NomePage = () => {
   const narradores = usuarios.filter(u => u.papel === "narrador");
   const jogadores = usuarios.filter(u => u.papel === "jogador");
 
-  function VolumeBar({ value }: { value: number }) {
+  function VolumeBar({ value }) {
     return (
       <div style={{
         width: 48,
@@ -79,7 +80,7 @@ const NomePage = () => {
     );
   }
 
-  function renderUserList(list: typeof usuarios) {
+  function renderUserList(list) {
     return (
       <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
         {list.map((u, i) => (
