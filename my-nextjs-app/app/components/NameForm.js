@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useContext } from '../context/UserContext';
 import AgoraRTC from 'agora-rtc-sdk-ng';
 
-const appId = 'SUA_APP_ID_AQUI';
+const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID;
 
 const NameForm = () => {
     const [name, setName] = useState('');
@@ -12,13 +12,28 @@ const NameForm = () => {
     const { user, setUsers, _client, _setClient } = useContext();
     const AgoraClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
     setClient(AgoraClient);
-    const JoinVoice = async => (){
-
-    }
     function handleSubmit(e) {
         e.preventDefault();
         const user = {nome=name,id=0,skill="jogador"}
+        useEffect(() => {
+            const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+            setClient(client);
 
+            const joinChannel = async () => {
+                const token = null; // ou seu token se tiver
+                const channel = 'LoreVoice';
+
+                await client.join(appId, channel, token, name);
+
+                const [microphoneTrack, cameraTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
+
+                setLocalAudioTrack(microphoneTrack);
+                setLocalVideoTrack(cameraTrack);
+
+                await client.publish([microphoneTrack, cameraTrack]);
+
+                console.log('Entrou na sala e publicou os streams');
+            };
         if (name.trim()) {
             router.push(`/nome?nome=${encodeURIComponent(name)}`);
         }
