@@ -4,11 +4,17 @@ import { useRouter } from 'next/navigation';
 import { useContext } from '../context/UserContext';
 import AgoraRTC from 'agora-rtc-sdk-ng';
 
+const appId = 'SUA_APP_ID_AQUI';
+
 const NameForm = () => {
     const [name, setName] = useState('');
     const router = useRouter();
-    const { user, setUsers } = useContext();
+    const { user, setUsers, _client, _setClient } = useContext();
+    const AgoraClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+    setClient(AgoraClient);
+    const JoinVoice = async => (){
 
+    }
     function handleSubmit(e) {
         e.preventDefault();
         const user = {nome=name,id=0,skill="jogador"}
