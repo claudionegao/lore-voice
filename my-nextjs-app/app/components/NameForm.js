@@ -37,8 +37,7 @@ const NameForm = () => {
         if (name.trim()) {
             router.push(`/nome?nome=${encodeURIComponent(name)}`);
         }
-    }
-
+    }}
     return (
         <form onSubmit={handleSubmit} className="flex flex-col items-center gap-4 p-6 bg-white rounded-lg shadow-md max-w-sm mx-auto">
             <label htmlFor="name" className="text-lg font-semibold text-gray-700">Qual seu nome?</label>
