@@ -9,7 +9,7 @@ const NameForm = () => {
     const [name, setName] = useState('');
     const [AgoraRTC, setAgoraRTC] = useState(null);
     const router = useRouter();
-    const { user, setUsers, _client, _setClient } = useContext(userContext);
+    const { user, setUsers, _client, _setClient } = useContext(UserContext);
     const AgoraClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
     useEffect(() => {
     import('agora-rtc-sdk-ng').then((mod) => {
