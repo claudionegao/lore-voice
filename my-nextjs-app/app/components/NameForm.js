@@ -10,15 +10,15 @@ const NameForm = () => {
     const [AgoraRTC, setAgoraRTC] = useState(null);
     const router = useRouter();
     const { user, setUsers, _client, _setClient } = useContext(UserContext);
-    const AgoraClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
     useEffect(() => {
     import('agora-rtc-sdk-ng').then((mod) => {
-        setAgoraRTC(mod);
+        setAgoraRTC(mod.default);
     });
     }, []);
     setClient(AgoraClient);
     async function handleSubmit(e) {
         e.preventDefault();
+        if (!AgoraRTC) return;
         const user = {nome:name,id:0,skill:"jogador"}
         const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
         _setClient(client)
