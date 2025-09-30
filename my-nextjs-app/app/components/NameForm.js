@@ -1,22 +1,26 @@
 "use client";
 import React, { useState , useContext } from 'react';
 import { useRouter } from 'next/navigation';
-import { UserContext } from '../context/UserContext';
-import AgoraRTC ,{ microphoneTrack } from 'agora-rtc-sdk-ng';
 
 const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID;
 
 const NameForm = () => {
     const [name, setName] = useState('');
+    const [AgoraRTC, setAgoraRTC] = useState(null);
     const router = useRouter();
     const { user, setUsers, _client, _setClient } = useContext();
     const AgoraClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+    useEffect(() => {
+    import('agora-rtc-sdk-ng').then((mod) => {
+        setAgoraRTC(mod);
+    });
+    }, []);
     setClient(AgoraClient);
     async function handleSubmit(e) {
         e.preventDefault();
         const user = {nome:name,id:0,skill:"jogador"}
         const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
-        setClient(client);
+        _setClient(client)
         const token = null; // ou seu token se tiver
         const channel = 'LoreVoice';
         await client.join(appId, channel, token, name);
@@ -39,6 +43,7 @@ const NameForm = () => {
             <button
                 type="submit"
                 className="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700 transition"
+                disabled={!AgoraRTC}
             >
                 Connect
             </button>
