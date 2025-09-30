@@ -24,10 +24,10 @@ const NomePage = () => {
   });
 
   const papelAtual = usuarios.find(u => u.nome === nome)?.papel === "narrador" ? "narrador" : "jogador";
-  const [papel, setPapel] = useState<"narrador" | "jogador">(papelAtual);
-  const [selecionados, setSelecionados] = useState<string[any]>([]);
+  const [papel, setPapel] = useState(papelAtual);
+  const [selecionados, setSelecionados] = useState([]);
 
-  const [volumes] = useState() =>
+  const [volumes] = useState(() =>
     Object.fromEntries(usuarios.map(u => [u.nome, Math.floor(Math.random() * 100) + 1]))
   );
 
