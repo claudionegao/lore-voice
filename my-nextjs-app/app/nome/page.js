@@ -3,7 +3,6 @@
 import React, { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { NOMEM } from 'dns';
 
 // Simula usuários e papéis
 const usuariosMock = [
@@ -28,7 +27,7 @@ const NomePage = () => {
   const [papel, setPapel] = useState<"narrador" | "jogador">(papelAtual);
   const [selecionados, setSelecionados] = useState<string[any]>([]);
 
-  const [volumes] = useState<{ [NOMEM]: any}>(() =>
+  const [volumes] = useState() =>
     Object.fromEntries(usuarios.map(u => [u.nome, Math.floor(Math.random() * 100) + 1]))
   );
 
