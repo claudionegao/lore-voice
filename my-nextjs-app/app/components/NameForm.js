@@ -22,8 +22,14 @@ const NameForm = () => {
         const user = {nome:name,id:0,skill:"jogador"}
         const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
         _setClient(client)
-        const token = null; // ou seu token se tiver
         const channel = 'LoreVoice';
+        const res = await fetch("/api/agora/token", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ channel }),
+        });
+        console.log(res)
+        const token = res.token; // ou seu token se tiver
         await client.join(appId, channel, token, name);
         const microphoneTrack = await AgoraRTC.createMicrophoneAudioTrack();
         await client.publish([microphoneTrack]);
