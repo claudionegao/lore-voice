@@ -26,7 +26,7 @@ export async function POST(req) {
     const agoraUid = uid ?? 0;
 
     // Gerar token
-    const token = RtcTokenBuilder.buildTokenWithUid(
+    const token = await RtcTokenBuilder.buildTokenWithUid(
       appId,
       appCertificate,
       channelName,
@@ -34,7 +34,7 @@ export async function POST(req) {
       RtcRole.PUBLISHER,
       privilegeExpireTs
     );
-
+    console.log(token)
     return NextResponse.json({ token });
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 });
