@@ -1,5 +1,6 @@
 "use client";
 import React, { useState , useContext,useEffect } from 'react';
+import { RtcRole, RtcTokenBuilder } from "agora-access-token";
 import { useRouter } from 'next/navigation';
 import UserContext   from '../context/UserContext';
 
@@ -23,11 +24,33 @@ const NameForm = () => {
         const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
         _setClient(client)
         const channel = 'LoreVoice';
-        const res = await fetch("/api/token", {
+        const appId = process.env.AGORA_APP_ID;
+        const expirationTimeInSeconds = 3600;
+        const currentTimestamp = Math.floor(Date.now() / 1000);
+        const privilegeExpireTs = currentTimestamp + expirationTimeInSeconds;
+        const appCertificate = process.env.AGORA_APP_CERTIFICATE;
+        const temptoken = await RtcTokenBuilder.buildTokenWithUid(
+            appId,
+            appCertificate,
+            channel,
+            name,
+            RtcRole.PUBLISHER,
+            privilegeExpireTs
+        );
+        console.log(temptoken)
+        console.log(
+            appId,
+            appCertificate,
+            channel,
+            name,
+            RtcRole.PUBLISHER,
+            privilegeExpireTs
+        );
+        /*const res = await fetch("/api/token", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ channel,name}),
-        });
+        });*/
         console.log(res)
         const token = res.token; // ou seu token se tiver
         await client.join(appId, channel, token, name);
