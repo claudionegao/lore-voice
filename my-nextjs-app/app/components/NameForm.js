@@ -23,7 +23,7 @@ const NameForm = () => {
         const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
         _setClient(client)
         const channel = 'LoreVoice';
-        const res = await fetch("/api/agora/token", {
+        const res = await fetch("/api/token", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ channel }),
