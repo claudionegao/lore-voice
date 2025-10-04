@@ -24,11 +24,11 @@ const NameForm = () => {
         const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
         _setClient(client)
         const channel = 'LoreVoice';
-        const appId = process.env.AGORA_APP_ID;
+        const appId = process.env.NEXT_PUBLIC_AGORA_APP_IDAGORA_APP_ID;
         const expirationTimeInSeconds = 3600;
         const currentTimestamp = Math.floor(Date.now() / 1000);
         const privilegeExpireTs = currentTimestamp + expirationTimeInSeconds;
-        const appCertificate = process.env.AGORA_APP_CERTIFICATE;
+        const appCertificate = process.env.NEXT_PUBLIC_AGORA_APP_CERTIFICATE;
         console.log('complete token')
         console.log(appId);
         console.log(appCertificate);
