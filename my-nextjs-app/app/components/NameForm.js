@@ -25,11 +25,11 @@ const NameForm = () => {
         _setClient(client)
         const channel = 'LoreVoice';
         const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID;
-        const res = await fetch("/api/token", {
+        const res = await (await fetch("/api/token", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ channel,name}),
-        });
+        });).json();
         console.log(res)
         const token = res.token; // ou seu token se tiver
         await client.join(appId, channel, token, name);
