@@ -37,7 +37,9 @@ const NameForm = () => {
             RtcRole.PUBLISHER,
             privilegeExpireTs
         );
+        console.log('temptoken')
         console.log(temptoken)
+        console.log('complete token')
         console.log(
             appId,
             appCertificate,
