@@ -40,14 +40,12 @@ const NameForm = () => {
         console.log('temptoken')
         console.log(temptoken)
         console.log('complete token')
-        console.log(
-            appId,
-            appCertificate,
-            channel,
-            name,
-            RtcRole.PUBLISHER,
-            privilegeExpireTs
-        );
+        console.log(appId);
+        console.log(appCertificate);
+        console.log(channel);
+        console.log(name);
+        console.log(RtcRole.PUBLISHER);
+        console.log(privilegeExpireTs);
         /*const res = await fetch("/api/token", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
