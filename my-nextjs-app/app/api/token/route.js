@@ -3,9 +3,9 @@ import { NextResponse } from "next/server";
 
 export async function POST(req) {
   try {
-    const { channelName, uid } = await req.json();
+    const { channel, uid } = await req.json();
 
-    if (!channelName) {
+    if (!channel) {
       return NextResponse.json({ error: "Channel name is required" }, { status: 400 });
     }
 
@@ -29,7 +29,7 @@ export async function POST(req) {
     const token = await RtcTokenBuilder.buildTokenWithUid(
       appId,
       appCertificate,
-      channelName,
+      channel,
       agoraUid,
       RtcRole.PUBLISHER,
       privilegeExpireTs
