@@ -26,7 +26,7 @@ const NameForm = () => {
         const res = await fetch("/api/token", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ channel }),
+            body: JSON.stringify({ channel,name}),
         });
         console.log(res)
         const token = res.token; // ou seu token se tiver
