@@ -24,7 +24,7 @@ const NameForm = () => {
         const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
         _setClient(client)
         const channel = 'LoreVoice';
-        const appId = process.env.NEXT_PUBLIC_AGORA_APP_IDAGORA_APP_ID;
+        const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID;
         const expirationTimeInSeconds = 3600;
         const currentTimestamp = Math.floor(Date.now() / 1000);
         const privilegeExpireTs = currentTimestamp + expirationTimeInSeconds;
