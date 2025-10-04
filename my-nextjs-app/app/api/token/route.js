@@ -26,7 +26,7 @@ export async function POST(req) {
     const agoraUid = uid ?? 0;
 
     // Gerar token
-    const token = await RtcTokenBuilder.buildTokenWithUid(
+    const token = await RtcTokenBuilder.buildTokenWithAccount(
       appId,
       appCertificate,
       channel,

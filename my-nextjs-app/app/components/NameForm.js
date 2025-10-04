@@ -30,7 +30,6 @@ const NameForm = () => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ channel,name}),
         })).json();
-        console.log(res)
         const token = res.token; // ou seu token se tiver
         await client.join(appId, channel, token, name);
         const microphoneTrack = await AgoraRTC.createMicrophoneAudioTrack();
