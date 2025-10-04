@@ -34,7 +34,6 @@ export async function POST(req) {
       RtcRole.PUBLISHER,
       privilegeExpireTs
     );
-    console.log(token)
     return NextResponse.json({ token });
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 });

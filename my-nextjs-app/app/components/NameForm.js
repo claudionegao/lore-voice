@@ -25,32 +25,11 @@ const NameForm = () => {
         _setClient(client)
         const channel = 'LoreVoice';
         const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID;
-        const expirationTimeInSeconds = 3600;
-        const currentTimestamp = Math.floor(Date.now() / 1000);
-        const privilegeExpireTs = currentTimestamp + expirationTimeInSeconds;
-        const appCertificate = process.env.NEXT_PUBLIC_AGORA_APP_CERTIFICATE;
-        console.log('complete token')
-        console.log(appId);
-        console.log(appCertificate);
-        console.log(channel);
-        console.log(name);
-        console.log(RtcRole.PUBLISHER);
-        console.log(privilegeExpireTs);
-        const temptoken = await RtcTokenBuilder.buildTokenWithUid(
-            appId,
-            appCertificate,
-            channel,
-            name,
-            RtcRole.PUBLISHER,
-            privilegeExpireTs
-        );
-        console.log('temptoken')
-        console.log(temptoken)
-        /*const res = await fetch("/api/token", {
+        const res = await fetch("/api/token", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ channel,name}),
-        });*/
+        });
         console.log(res)
         const token = res.token; // ou seu token se tiver
         await client.join(appId, channel, token, name);
