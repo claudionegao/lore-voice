@@ -17,10 +17,8 @@ const NameForm = () => {
     }, []);
     useEffect(() => {
         if (!_client) {
-            console.log("Aguardando client...");
             return;
         }
-        console.log("Agora o client está disponível:", _client);
 
         _client.on("user-published", async (user, mediaType) => {
             await _client.subscribe(user, mediaType);
@@ -40,7 +38,7 @@ const NameForm = () => {
     async function handleSubmit(e) {
         e.preventDefault();
         if (!AgoraRTC) return;
-        const client = await AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+        const client = await AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8', logConfig: { level: 0 } });
         console.log("Client criado:", client);
         const user = {nome:name,id:0,skill:"jogador"}
         const channel = 'LoreVoice';
@@ -54,6 +52,9 @@ const NameForm = () => {
         await client.join(appId, channel, token, name);
         const microphoneTrack = await AgoraRTC.createMicrophoneAudioTrack();
         await client.publish([microphoneTrack]);
+        const users = client.remoteUsers;
+        console.log(users);
+
         _setClient(client);
         };
     return (
