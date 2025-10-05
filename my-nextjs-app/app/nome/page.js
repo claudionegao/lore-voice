@@ -1,8 +1,9 @@
+// app/nome/page.js
 "use client";
 
-import React, { Suspense } from 'react';
+import React, { Suspense, useContext, useState , useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import UserContext, { UserProvider } from '../context/UserContext';
 
 // Simula usuários e papéis
 const usuariosMock = [
@@ -10,7 +11,14 @@ const usuariosMock = [
   { nome: "Bob", papel: "narrador" },
 ];
 
+
 const NomePage = () => {
+  const { _client, _setClient } = useContext(UserContext);
+  useEffect(() => {
+    if (!_client || _client.connectionState !== "CONNECTED") {
+      router.replace("/");
+    }
+  }, [_client]);
   const searchParams = useSearchParams();
   const router = useRouter();
   const nome = searchParams.get('nome') || '';
@@ -25,12 +33,16 @@ const NomePage = () => {
 
   const papelAtual = usuarios.find(u => u.nome === nome)?.papel === "narrador" ? "narrador" : "jogador";
   const [papel, setPapel] = useState(papelAtual);
+
+
   const [selecionados, setSelecionados] = useState([]);
   const [volumes] = useState(() =>
     Object.fromEntries(usuarios.map(u => [u.nome, Math.floor(Math.random() * 100) + 1]))
   );
 
-  function handleDesconectar() {
+  async function handleDesconectar() {
+    console.log(_client);
+    await _client.leave();
     router.replace("/");
   }
 
@@ -168,23 +180,10 @@ const NomePage = () => {
         </div>
 
         <div>
-          <div
-            style={{
-              fontWeight: 600,
-              marginBottom: 8,
-              color: "#b3b3cc",
-            }}
-          >
+          <div style={{ fontWeight: 600, marginBottom: 8, color: "#b3b3cc" }}>
             Selecione seu papel:
           </div>
-          <label
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              marginBottom: 8,
-            }}
-          >
+          <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
             <input
               type="radio"
               name="papel"
@@ -195,13 +194,7 @@ const NomePage = () => {
             />
             Narrador
           </label>
-          <label
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-            }}
-          >
+          <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <input
               type="radio"
               name="papel"
@@ -257,8 +250,8 @@ const NomePage = () => {
 
 export default function NomePageWrapper() {
   return (
-    <Suspense fallback={<div>Carregando...</div>}>
-      <NomePage />
-    </Suspense>
+      <Suspense fallback={<div>Carregando...</div>}>
+        <NomePage />
+      </Suspense>
   );
 }

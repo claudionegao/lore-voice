@@ -6,22 +6,43 @@ import UserContext   from '../context/UserContext';
 
 const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID;
 
+
 const NameForm = () => {
     const [name, setName] = useState('');
     const [AgoraRTC, setAgoraRTC] = useState(null);
     const router = useRouter();
     const { user, setUsers, _client, _setClient } = useContext(UserContext);
     useEffect(() => {
-    import('agora-rtc-sdk-ng').then((mod) => {
-        setAgoraRTC(mod.default).then(() => _setClient(AgoraRTC));
-    });
+        import('agora-rtc-sdk-ng').then((mod) => setAgoraRTC(mod.default));
     }, []);
+    useEffect(() => {
+        if (!_client) {
+            console.log("Aguardando client...");
+            return;
+        }
+        console.log("Agora o client está disponível:", _client);
+
+        _client.on("user-published", async (user, mediaType) => {
+            await _client.subscribe(user, mediaType);
+            console.log(`user ${user.uid} entrou`);
+            if (mediaType === "audio") {
+            user.audioTrack.play();
+            }
+        });
+
+        _client.on("user-unpublished", (user) => {
+            console.log(`${user.uid} saiu`);
+        });
+        if (_client && _client.connectionState === "CONNECTED") {
+            router.push(`/nome?nome=${encodeURIComponent(name)}`);
+        }
+    }, [_client]);
     async function handleSubmit(e) {
         e.preventDefault();
         if (!AgoraRTC) return;
+        const client = await AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+        console.log("Client criado:", client);
         const user = {nome:name,id:0,skill:"jogador"}
-        const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
-        _setClient(client)
         const channel = 'LoreVoice';
         const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID;
         const res = await (await fetch("/api/token", {
@@ -33,22 +54,7 @@ const NameForm = () => {
         await client.join(appId, channel, token, name);
         const microphoneTrack = await AgoraRTC.createMicrophoneAudioTrack();
         await client.publish([microphoneTrack]);
-        useEffect(() => {
-            if (!client) return;
-
-            client.on("user-published", async (user, mediaType) => {
-                await client.subscribe(user, mediaType);
-
-                if (mediaType === "audio") {
-                user.audioTrack.play();
-                }
-            });
-
-            client.on("user-unpublished", (user) => {
-                console.log(`${user.uid} saiu`);
-            });
-        }, [client]);
-        router.push(`/nome?nome=${encodeURIComponent(name)}`);
+        _setClient(client);
         };
     return (
         <form onSubmit={handleSubmit} className="flex flex-col items-center gap-4 p-6 bg-white rounded-lg shadow-md max-w-sm mx-auto">
