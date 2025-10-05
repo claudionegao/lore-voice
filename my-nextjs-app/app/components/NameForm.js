@@ -52,9 +52,12 @@ const NameForm = () => {
         await client.join(appId, channel, token, name);
         const microphoneTrack = await AgoraRTC.createMicrophoneAudioTrack();
         await client.publish([microphoneTrack]);
-        const users = client.remoteUsers;
-        console.log(users);
-
+        const resUser = await (await fetch('/api/updateDB', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome: name }),
+        })).json();
+        console.log(resUser)
         _setClient(client);
         };
     return (
