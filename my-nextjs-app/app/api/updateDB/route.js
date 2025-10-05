@@ -1,6 +1,6 @@
 // app/api/updateDB/route.js
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '../../../lib/prisma';
 
 const AGORA_API_BASE = 'https://api.agora.io/v1/apps';
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID;
