@@ -68,8 +68,6 @@ const NomePage = () => {
     );
 
     // Atualiza DB
-    console.log(nome)
-    console.log(novoPapel)
     try {
       await fetch('/api/updateSkill', {
         method: 'POST',
