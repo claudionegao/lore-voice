@@ -13,10 +13,9 @@ const NameForm = () => {
     const { user, setUsers, _client, _setClient } = useContext(UserContext);
     useEffect(() => {
     import('agora-rtc-sdk-ng').then((mod) => {
-        setAgoraRTC(mod.default);
+        setAgoraRTC(mod.default).then(() => _setClient(AgoraRTC));
     });
     }, []);
-    _setClient(AgoraRTC);
     async function handleSubmit(e) {
         e.preventDefault();
         if (!AgoraRTC) return;
@@ -34,6 +33,21 @@ const NameForm = () => {
         await client.join(appId, channel, token, name);
         const microphoneTrack = await AgoraRTC.createMicrophoneAudioTrack();
         await client.publish([microphoneTrack]);
+        useEffect(() => {
+            if (!client) return;
+
+            client.on("user-published", async (user, mediaType) => {
+                await client.subscribe(user, mediaType);
+
+                if (mediaType === "audio") {
+                user.audioTrack.play();
+                }
+            });
+
+            client.on("user-unpublished", (user) => {
+                console.log(`${user.uid} saiu`);
+            });
+        }, [client]);
         router.push(`/nome?nome=${encodeURIComponent(name)}`);
         };
     return (
