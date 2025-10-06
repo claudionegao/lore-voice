@@ -1,61 +1,88 @@
+// app/nome/page.js
 "use client";
 
-import React, { Suspense } from 'react';
+import React, { Suspense, useContext, useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
-
-// Simula usuários e papéis
-const usuariosMock = [
-  { nome: "Alice", papel: "jogador" },
-  { nome: "Bob", papel: "narrador" },
-];
+import UserContext from '../context/UserContext';
 
 const NomePage = () => {
-  const searchParams = useSearchParams();
+  const { _client } = useContext(UserContext);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const nome = searchParams.get('nome') || '';
 
-  // Estado local para todos os usuários (incluindo o atual)
-  const [usuarios, setUsuarios] = useState(() => {
-    const jaExiste = usuariosMock.some(u => u.nome === nome);
-    return jaExiste
-      ? usuariosMock
-      : [...usuariosMock, { nome, papel: "jogador" }];
-  });
+  const [usuarios, setUsuarios] = useState([]);
+  const [papel, setPapel] = useState("jogador");
+  const [selecionados, setSelecionados] = useState([]);
+  const [volumes, setVolumes] = useState({});
 
-  const papelAtual = usuarios.find(u => u.nome === nome)?.papel === "narrador" ? "narrador" : "jogador";
-  const [papel, setPapel] = useState<"narrador" | "jogador">(papelAtual);
-  const [selecionados, setSelecionados] = useState<string[]>([]);
+  // 🔹 Verifica conexão
+  useEffect(() => {
+    if (!_client || _client.connectionState !== "CONNECTED") {
+      router.replace("/");
+    }
+  }, [_client]);
 
-  const [volumes] = useState<{ [nome: string]: number }>(() =>
-    Object.fromEntries(usuarios.map(u => [u.nome, Math.floor(Math.random() * 100) + 1]))
-  );
+  // 🔹 Buscar usuários do DB
+  useEffect(() => {
+    async function fetchUsuarios() {
+      try {
+        const res = await fetch('/api/getUsers');
+        const data = await res.json();
+        setUsuarios(data);
 
-  function handleDesconectar() {
+        // Define papel do usuário atual
+        const userAtual = data.find(u => u.nome === nome);
+        setPapel(userAtual?.skill || "jogador");
+
+        // Inicializa volumes
+        const vols = Object.fromEntries(data.map(u => [u.nome, Math.floor(Math.random() * 100) + 1]));
+        setVolumes(vols);
+
+      } catch (err) {
+        console.error("Erro ao buscar usuários:", err);
+      }
+    }
+    fetchUsuarios();
+  }, [nome]);
+
+  async function handleDesconectar() {
+    await _client.leave();
     router.replace("/");
   }
 
-  function handleCheckbox(usuario: string) {
-    setSelecionados((prev) =>
+  function handleCheckbox(usuario) {
+    setSelecionados(prev =>
       prev.includes(usuario)
-        ? prev.filter((u) => u !== usuario)
+        ? prev.filter(u => u !== usuario)
         : [...prev, usuario]
     );
   }
 
-  function handlePapelChange(novoPapel: "narrador" | "jogador") {
+  async function handlePapelChange(novoPapel) {
     setPapel(novoPapel);
     setUsuarios(prev =>
       prev.map(u =>
-        u.nome === nome ? { ...u, papel: novoPapel } : u
+        u.nome === nome ? { ...u, skill: novoPapel } : u
       )
     );
+
+    // Atualiza DB
+    try {
+      await fetch('/api/updateSkill', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome: nome, skill: novoPapel })
+      });
+    } catch (err) {
+      console.error("Erro ao atualizar skill:", err);
+    }
   }
 
-  const narradores = usuarios.filter(u => u.papel === "narrador");
-  const jogadores = usuarios.filter(u => u.papel === "jogador");
+  const narradores = usuarios.filter(u => u.skill === "narrador");
+  const jogadores = usuarios.filter(u => u.skill === "jogador");
 
-  function VolumeBar({ value }: { value: number }) {
+  function VolumeBar({ value }) {
     return (
       <div style={{
         width: 48,
@@ -79,7 +106,7 @@ const NomePage = () => {
     );
   }
 
-  function renderUserList(list: typeof usuarios) {
+  function renderUserList(list) {
     return (
       <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
         {list.map((u, i) => (
@@ -114,78 +141,52 @@ const NomePage = () => {
   }
 
   return (
-    <div
-      style={{
-        maxWidth: 900,
-        margin: "40px auto",
+    <div style={{
+      maxWidth: 900,
+      margin: "40px auto",
+      display: "flex",
+      flexDirection: "row",
+      gap: 32,
+      alignItems: "flex-start",
+      justifyContent: "center",
+    }}>
+      <div style={{
+        background: "#23233a",
+        borderRadius: 16,
+        padding: 32,
+        boxShadow: "0 4px 24px 0 #0006",
+        color: "#f3f3f3",
         display: "flex",
-        flexDirection: "row",
-        gap: 32,
-        alignItems: "flex-start",
-        justifyContent: "center",
-      }}
-    >
-      {/* Div para o restante das informações */}
-      <div
-        style={{
-          background: "#23233a",
-          borderRadius: 16,
-          padding: 32,
-          boxShadow: "0 4px 24px 0 #0006",
-          color: "#f3f3f3",
-          display: "flex",
-          flexDirection: "column",
-          gap: 24,
-          alignItems: "stretch",
-          minWidth: 320,
-          flex: 1,
-        }}
-      >
-        <h1
-          style={{
-            textAlign: "center",
-            fontSize: "2rem",
-            fontWeight: 700,
-            margin: 0,
-            color: "#6366f1",
-          }}
-        >
-          {nome}
-        </h1>
+        flexDirection: "column",
+        gap: 24,
+        alignItems: "stretch",
+        minWidth: 320,
+        flex: 1,
+      }}>
+        <h1 style={{
+          textAlign: "center",
+          fontSize: "2rem",
+          fontWeight: 700,
+          margin: 0,
+          color: "#6366f1",
+        }}>{nome}</h1>
 
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span
-            style={{
-              width: 12,
-              height: 12,
-              borderRadius: "50%",
-              background: "#22c55e",
-              display: "inline-block",
-              marginRight: 8,
-              boxShadow: "0 0 6px #22c55e88",
-            }}
-          />
+          <span style={{
+            width: 12,
+            height: 12,
+            borderRadius: "50%",
+            background: "#22c55e",
+            display: "inline-block",
+            marginRight: 8,
+            boxShadow: "0 0 6px #22c55e88",
+          }} />
           <span style={{ fontWeight: 500, color: "#b3b3cc" }}>Conectado</span>
         </div>
 
         <div>
-          <div
-            style={{
-              fontWeight: 600,
-              marginBottom: 8,
-              color: "#b3b3cc",
-            }}
-          >
-            Selecione seu papel:
-          </div>
-          <label
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              marginBottom: 8,
-            }}
-          >
+          <div style={{ fontWeight: 600, marginBottom: 8, color: "#b3b3cc" }}>Selecione seu papel:</div>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
             <input
               type="radio"
               name="papel"
@@ -196,13 +197,7 @@ const NomePage = () => {
             />
             Narrador
           </label>
-          <label
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-            }}
-          >
+          <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <input
               type="radio"
               name="papel"
@@ -234,19 +229,16 @@ const NomePage = () => {
         </button>
       </div>
 
-      {/* Lista de usuários em divisória separada */}
-      <div
-        style={{
-          border: "1px solid #282846",
-          borderRadius: 10,
-          padding: "24px 20px",
-          background: "#232345",
-          minWidth: 220,
-          maxWidth: 280,
-          flex: "0 0 220px",
-          boxSizing: "border-box",
-        }}
-      >
+      <div style={{
+        border: "1px solid #282846",
+        borderRadius: 10,
+        padding: "24px 20px",
+        background: "#232345",
+        minWidth: 220,
+        maxWidth: 280,
+        flex: "0 0 220px",
+        boxSizing: "border-box",
+      }}>
         <div style={{ marginBottom: 10, color: "#a5b4fc", fontWeight: 500 }}>Narradores</div>
         {renderUserList(narradores)}
         <div style={{ margin: "18px 0 10px 0", color: "#a5b4fc", fontWeight: 500 }}>Jogadores</div>
