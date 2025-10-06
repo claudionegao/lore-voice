@@ -15,7 +15,7 @@ export async function POST(req) {
       return NextResponse.json({ error: 'nome is required' }, { status: 400 });
     }
 
-    // Busca usuários conectados na API do Agora
+    // 🔹 Buscar usuários conectados na API do Agora
     async function fetchAgoraUsers() {
       const res = await fetch(
         `https://api.agora.io/dev/v1/channel/user/${appId}/${channelName}`,
@@ -31,7 +31,7 @@ export async function POST(req) {
       return NextResponse.json({ message: 'Sala não existe' }, { status: 200 });
     }
 
-    // Busca dados detalhados dos usuários
+    // 🔹 Buscar dados detalhados dos usuários
     async function fetchUserData(uids) {
       const usuariosData = [];
       for (const uid of uids) {
@@ -56,48 +56,63 @@ export async function POST(req) {
 
     let usuariosData = await fetchUserData(connectedUids);
 
-    // 1 usuário na sala: ele vira host automaticamente
+    // 🔹 1 usuário na sala vira host automaticamente
     if (usuariosData.length === 1 && usuariosData[0].account === nome) {
-      await prisma.user.upsert({
-        where: { nome }, // aqui usamos nome como unique temporário
-        update: { host: true, skill: 'narrador', agoraId: usuariosData[0].uid?.toString() },
-        create: {
-          nome,
-          host: true,
-          skill: 'narrador',
-          agoraId: usuariosData[0].uid?.toString(),
-        },
+      const existingUser = await prisma.user.findFirst({
+        where: { agoraId: usuariosData[0].uid?.toString() }
       });
+
+      if (existingUser) {
+        await prisma.user.update({
+          where: { id: existingUser.id },
+          data: { host: true, skill: 'narrador', agoraId: usuariosData[0].uid?.toString() }
+        });
+      } else {
+        await prisma.user.create({
+          data: {
+            nome,
+            host: true,
+            skill: 'narrador',
+            agoraId: usuariosData[0].uid?.toString()
+          }
+        });
+      }
+
       return NextResponse.json({ message: 'Você é o host e foi adicionado ao DB', host: true });
     }
 
-    // Pegar todos os usuários do DB
+    // 🔹 Pegar todos os usuários do DB
     const dbUsers = await prisma.user.findMany();
 
-    // Se makeHost for solicitado
+    // 🔹 Se makeHost for solicitado
     if (makeHost) {
       // Remove host atual, se existir
       await prisma.user.updateMany({ where: { host: true }, data: { host: false } });
 
-      // Marca o solicitante como host
-      await prisma.user.upsert({
-        where: { nome },
-        update: { host: true },
-        create: { nome, host: true, skill: 'narrador', agoraId: null },
-      });
+      // Atualiza ou cria o novo host
+      const existingUser = await prisma.user.findFirst({ where: { nome } });
+      if (existingUser) {
+        await prisma.user.update({
+          where: { id: existingUser.id },
+          data: { host: true }
+        });
+      } else {
+        await prisma.user.create({
+          data: { nome, host: true, skill: 'narrador', agoraId: null }
+        });
+      }
 
       return NextResponse.json({ message: `${nome} agora é o host da sala`, host: true });
     }
 
-    // Identifica usuário atual no DB (se existir)
+    // 🔹 Identifica usuário atual no DB
     const userAtual = dbUsers.find((u) => u.nome === nome);
 
-    // Se existir usuários e você não for host, não pode atualizar
     if (dbUsers.length > 0 && !userAtual?.host) {
       return NextResponse.json({ error: 'Você não é o host da sala' }, { status: 403 });
     }
 
-    // Sincroniza DB com usuários conectados no Agora
+    // 🔹 Sincroniza DB com usuários conectados no Agora
     const dbIds = dbUsers.map(u => u.agoraId);
     const toAdd = usuariosData.filter(u => !dbIds.includes(u.uid?.toString()));
     for (const u of toAdd) {
@@ -117,7 +132,7 @@ export async function POST(req) {
       await prisma.user.delete({ where: { id: u.id } });
     }
 
-    // Verifica se ainda há host, se não, define o usuário com menor ID como host
+    // 🔹 Se não houver host, define usuário com menor ID como host
     const hostExists = await prisma.user.findFirst({ where: { host: true } });
     if (!hostExists && dbUsers.length > 0) {
       const menorIdUser = await prisma.user.findFirst({ orderBy: { id: 'asc' } });
@@ -131,6 +146,7 @@ export async function POST(req) {
       added: toAdd.map(u => u.account),
       removed: toRemove.map(u => u.nome),
     });
+
   } catch (error) {
     return NextResponse.json({ error: error.message, details: error.stack }, { status: 500 });
   }
