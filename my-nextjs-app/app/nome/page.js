@@ -32,8 +32,8 @@ const NomePage = () => {
         setUsuarios(data);
 
         // Define papel do usuário atual
-        const usuarios = Array.isArray(data) ? data : [];
-        setPapel(userAtual?.skill || "jogador");
+        const usuariosArray = Array.isArray(data) ? data : [];
+        setUsuarios(usuariosArray);
 
         // Inicializa volumes
         const vols = Object.fromEntries(data.map(u => [u.nome, Math.floor(Math.random() * 100) + 1]));
