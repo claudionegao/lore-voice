@@ -32,7 +32,7 @@ const NomePage = () => {
         setUsuarios(data);
 
         // Define papel do usuário atual
-        const userAtual = data.find(u => u.nome === nome);
+        const usuarios = Array.isArray(data) ? data : [];
         setPapel(userAtual?.skill || "jogador");
 
         // Inicializa volumes
