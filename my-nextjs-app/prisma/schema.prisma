@@ -9,7 +9,7 @@ generator client {
 }
 
 model User {
-  id      Int     @id @default(autoincrement())
+  id      Int     @unique @id @default(autoincrement())
   nome    String
   skill   String
   host    Boolean @default(false)
