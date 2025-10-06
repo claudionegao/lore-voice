@@ -6,13 +6,13 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import UserContext from '../context/UserContext';
 
 const NomePage = () => {
-  const { _client } = useContext(UserContext);
+  const { _client, users } = useContext(UserContext); 
   const router = useRouter();
   const searchParams = useSearchParams();
   const nome = searchParams.get('nome') || '';
 
   const [usuarios, setUsuarios] = useState([]);
-  const [papel, setPapel] = useState("jogador");
+  const [papel, setPapel] = useState("narrador"); // agora começa selecionado no Narrador
   const [selecionados, setSelecionados] = useState([]);
   const [volumes, setVolumes] = useState({});
 
@@ -23,17 +23,13 @@ const NomePage = () => {
     }
   }, [_client]);
 
-  // 🔹 Buscar usuários do DB
+  // 🔹 Buscar usuários do DB inicialmente
   useEffect(() => {
     async function fetchUsuarios() {
       try {
         const res = await fetch('/api/getUsers');
         const data = await res.json();
         setUsuarios(data);
-
-        // Define papel do usuário atual
-        const usuariosArray = Array.isArray(data) ? data : [];
-        setUsuarios(usuariosArray);
 
         // Inicializa volumes
         const vols = Object.fromEntries(data.map(u => [u.nome, Math.floor(Math.random() * 100) + 1]));
@@ -45,6 +41,13 @@ const NomePage = () => {
     }
     fetchUsuarios();
   }, [nome]);
+
+  // 🔹 Atualiza lista local sempre que 'users' do contexto mudar
+  useEffect(() => {
+    if (Array.isArray(users)) {
+      setUsuarios(users);
+    }
+  }, [users]);
 
   async function handleDesconectar() {
     await _client.leave();
@@ -62,21 +65,21 @@ const NomePage = () => {
   async function handlePapelChange(novoPapel) {
     setPapel(novoPapel);
     setUsuarios(prev =>
-      prev.map(u =>
-        u.nome === nome ? { ...u, skill: novoPapel } : u
-      )
+      prev.map(u => u.nome === nome ? { ...u, skill: novoPapel } : u)
     );
 
     // Atualiza DB
-    try {
-      await fetch('/api/updateSkill', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome: nome, skill: novoPapel })
-      });
-    } catch (err) {
-      console.error("Erro ao atualizar skill:", err);
-    }
+    await fetch('/api/updateSkill', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nome, skill: novoPapel })
+    });
+
+    // Envia notificação para outros usuários via _client
+    _client.sendMessage({
+      type: 'papelChanged',
+      data: { nome, skill: novoPapel }
+    });
   }
 
   const narradores = usuarios.filter(u => u.skill === "narrador");

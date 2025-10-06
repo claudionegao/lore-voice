@@ -9,7 +9,7 @@ const NameForm = () => {
   const [name, setName] = useState("");
   const [AgoraRTC, setAgoraRTC] = useState(null);
   const router = useRouter();
-  const { _client, _setClient } = useContext(UserContext);
+  const { _client, _setClient, setUsers } = useContext(UserContext);
 
   // Função auxiliar — espera até o cliente estar realmente conectado
   function waitForConnection(client, timeout = 5000) {
@@ -91,6 +91,14 @@ const NameForm = () => {
   // Lida com eventos de entrada e saída de usuários
   useEffect(() => {
     if (!_client) return;
+
+    _client.on('message', (msg) => {
+      if (msg.type === 'papelChanged') {
+        setUsers(prev =>
+          prev.map(u => u.nome === msg.data.nome ? { ...u, skill: msg.data.skill } : u)
+        );
+      }
+    });
 
     _client.on("user-published", async (user, mediaType) => {
       await _client.subscribe(user, mediaType);
