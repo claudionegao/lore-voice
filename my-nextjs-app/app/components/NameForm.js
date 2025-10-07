@@ -8,10 +8,8 @@ const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID;
 const NameForm = () => {
   const [name, setName] = useState("");
   const [AgoraRTC, setAgoraRTC] = useState(null);
-  const [AgoraRTM, setAgoraRTM] = useState(null);
   const router = useRouter();
-  const { _client, _mClient, _setClient, setUsers, _setMclient } =
-    useContext(UserContext);
+  const { _client, _setClient, setUsers } = useContext(UserContext);
 
   // 🔹 Aguarda conexão RTC
   function waitForConnection(client, timeout = 5000) {
@@ -82,40 +80,21 @@ const NameForm = () => {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // RTC ESM
     import("agora-rtc-sdk-ng").then((mod) => setAgoraRTC(mod.default));
-
-    // RTM ESM
-    import("agora-rtm-sdk").then((mod) => setAgoraRTM(mod));
   }, []);
 
   // 🔹 Eventos de usuário RTC
   useEffect(() => {
     if (!_client) return;
 
-    _mClient?.on("MessageFromPeer", (msg, peerId) => {
-      try {
-        const data = JSON.parse(msg.text);
-        if (data.type === "papelChanged") {
-          setUsers((prev) =>
-            prev.map((u) =>
-              u.nome === data.data.nome ? { ...u, skill: data.data.skill } : u
-            )
-          );
-        }
-      } catch (err) {
-        console.error("Erro ao processar mensagem RTM:", err);
-      }
-    });
-
-    _client.on("user-published", async (user, mediaType) => {
+    _client.on("user-join", async (user, mediaType) => {
       await _client.subscribe(user, mediaType);
       console.log(`user ${user.uid} entrou`);
       if (mediaType === "audio") user.audioTrack.play();
       await handleUserChange();
     });
 
-    _client.on("user-unpublished", async (user) => {
+    _client.on("user-leave", async (user) => {
       console.log(`user ${user.uid} saiu`);
       await handleUserChange();
     });
@@ -128,16 +107,10 @@ const NameForm = () => {
   // 🔹 Submissão do formulário
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!AgoraRTC || !AgoraRTM) return;
+    if (!AgoraRTC) return;
 
-    // RTM
-    const rtmClient = AgoraRTM.createInstance(appId, { enableLogUpload: false });
-    await rtmClient.login({ uid: name });
-    const channel = await rtmClient.createChannel("SkillChannel");
-    await channel.join();
-
-    // RTC
     const rtcClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+
     const res = await fetch("/api/token", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -157,7 +130,6 @@ const NameForm = () => {
     });
 
     _setClient(rtcClient);
-    _setMclient(channel);
   }
 
   return (
@@ -180,7 +152,7 @@ const NameForm = () => {
       <button
         type="submit"
         className="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700 transition"
-        disabled={!AgoraRTC || !AgoraRTM}
+        disabled={!AgoraRTC}
       >
         Connect
       </button>
