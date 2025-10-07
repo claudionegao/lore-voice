@@ -78,22 +78,47 @@ const NameForm = () => {
     }
   }
 
-  // 🔹 Import dinâmico (só no browser)
+  // 🔹 Import dinâmico (RTC + RTM)
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // RTC normal (ESM)
-    import("agora-rtc-sdk-ng").then((mod) => setAgoraRTC(mod.default));
+    // RTC via import
+    import("agora-rtc-sdk-ng")
+      .then((mod) => setAgoraRTC(mod.default))
+      .catch((err) => console.error("❌ Erro ao importar AgoraRTC:", err));
 
-    // RTM via script global (evita "window is not defined")
+    // RTM via script global com fallback
     const script = document.createElement("script");
-    script.src = "https://download.agora.io/sdk/release/AgoraRTM.min.js";
+    script.src = "https://cdn.jsdelivr.net/npm/agora-rtm-sdk@1.5.1/AgoraRTM.min.js";
     script.async = true;
-    script.onload = () => {
-      setAgoraRTM(window.AgoraRTM);
-      console.log("✅ AgoraRTM carregado via script global");
-    };
     document.body.appendChild(script);
+
+    const checkRTM = setInterval(() => {
+      if (window.AgoraRTM) {
+        clearInterval(checkRTM);
+        setAgoraRTM(window.AgoraRTM);
+        console.log("✅ AgoraRTM detectado (via polling)");
+      }
+    }, 500);
+
+    script.onload = () => {
+      if (window.AgoraRTM) {
+        setAgoraRTM(window.AgoraRTM);
+        console.log("✅ AgoraRTM carregado via script global");
+        clearInterval(checkRTM);
+      } else {
+        console.error("❌ Script carregou, mas window.AgoraRTM não existe");
+      }
+    };
+
+    script.onerror = (err) => {
+      console.error("❌ Erro ao carregar AgoraRTM script:", err);
+    };
+
+    return () => {
+      clearInterval(checkRTM);
+      document.body.removeChild(script);
+    };
   }, []);
 
   // 🔹 Eventos de usuário
@@ -130,7 +155,7 @@ const NameForm = () => {
   // 🔹 Submissão
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!AgoraRTC) return;
+    if (!AgoraRTC || !AgoraRTM) return;
 
     // RTM
     const rtm = AgoraRTM.createInstance(appId);
