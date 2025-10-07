@@ -1,4 +1,3 @@
-// app/nome/page.js
 "use client";
 
 import React, { Suspense, useContext, useState, useEffect } from 'react';
@@ -6,13 +5,13 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import UserContext from '../context/UserContext';
 
 const NomePage = () => {
-  const { _client,_mClient, users } = useContext(UserContext); 
+  const { _client, users } = useContext(UserContext); 
   const router = useRouter();
   const searchParams = useSearchParams();
   const nome = searchParams.get('nome') || '';
+  const skill = searchParams.get('skill') || 'narrador';
 
   const [usuarios, setUsuarios] = useState([]);
-  const [papel, setPapel] = useState("narrador"); // agora começa selecionado no Narrador
   const [selecionados, setSelecionados] = useState([]);
   const [volumes, setVolumes] = useState({});
 
@@ -31,7 +30,6 @@ const NomePage = () => {
         const data = await res.json();
         setUsuarios(data);
 
-        // Inicializa volumes
         const vols = Object.fromEntries(data.map(u => [u.nome, Math.floor(Math.random() * 100) + 1]));
         setVolumes(vols);
 
@@ -60,26 +58,6 @@ const NomePage = () => {
         ? prev.filter(u => u !== usuario)
         : [...prev, usuario]
     );
-  }
-
-  async function handlePapelChange(novoPapel) {
-    setPapel(novoPapel);
-    setUsuarios(prev =>
-      prev.map(u => u.nome === nome ? { ...u, skill: novoPapel } : u)
-    );
-
-    // Atualiza DB
-    await fetch('/api/updateSkill', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nome, skill: novoPapel })
-    });
-
-    // Envia notificação para outros usuários via _client
-    _mClient.sendMessage({
-      type: 'papelChanged',
-      data: { nome, skill: novoPapel }
-    });
   }
 
   const narradores = usuarios.filter(u => u.skill === "narrador");
@@ -124,7 +102,7 @@ const NomePage = () => {
               gap: 8,
             }}
           >
-            {papel === "narrador" && u.nome !== nome && (
+            {skill === "narrador" && u.nome !== nome && (
               <input
                 type="checkbox"
                 checked={selecionados.includes(u.nome)}
@@ -172,7 +150,7 @@ const NomePage = () => {
           fontWeight: 700,
           margin: 0,
           color: "#6366f1",
-        }}>{nome}</h1>
+        }}>{nome} ({skill})</h1>
 
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{
@@ -185,32 +163,6 @@ const NomePage = () => {
             boxShadow: "0 0 6px #22c55e88",
           }} />
           <span style={{ fontWeight: 500, color: "#b3b3cc" }}>Conectado</span>
-        </div>
-
-        <div>
-          <div style={{ fontWeight: 600, marginBottom: 8, color: "#b3b3cc" }}>Selecione seu papel:</div>
-          <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-            <input
-              type="radio"
-              name="papel"
-              value="narrador"
-              checked={papel === "narrador"}
-              onChange={() => handlePapelChange("narrador")}
-              style={{ accentColor: "#6366f1" }}
-            />
-            Narrador
-          </label>
-          <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <input
-              type="radio"
-              name="papel"
-              value="jogador"
-              checked={papel === "jogador"}
-              onChange={() => handlePapelChange("jogador")}
-              style={{ accentColor: "#6366f1" }}
-            />
-            Jogador
-          </label>
         </div>
 
         <button

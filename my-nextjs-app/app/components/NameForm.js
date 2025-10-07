@@ -7,6 +7,7 @@ const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID;
 
 const NameForm = () => {
   const [name, setName] = useState("");
+  const [skill, setSkill] = useState("narrador"); // skill selecionada
   const [AgoraRTC, setAgoraRTC] = useState(null);
   const router = useRouter();
   const { _client, _setClient, setUsers } = useContext(UserContext);
@@ -55,7 +56,7 @@ const NameForm = () => {
       await fetch("/api/updateDB", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nome: name }),
+        body: JSON.stringify({ nome: name, skill }),
       });
       return;
     }
@@ -71,7 +72,7 @@ const NameForm = () => {
       await fetch("/api/updateDB", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nome, makeHost: true }),
+        body: JSON.stringify({ nome, makeHost: true, skill }),
       });
     }
   }
@@ -100,7 +101,7 @@ const NameForm = () => {
     });
 
     if (_client.connectionState === "CONNECTED") {
-      router.push(`/nome?nome=${encodeURIComponent(name)}`);
+      router.push(`/nome?nome=${encodeURIComponent(name)}&skill=${encodeURIComponent(skill)}`);
     }
   }, [_client]);
 
@@ -126,10 +127,11 @@ const NameForm = () => {
     await fetch("/api/updateDB", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nome: name }),
+      body: JSON.stringify({ nome: name, skill }),
     });
 
     _setClient(rtcClient);
+    router.push(`/nome?nome=${encodeURIComponent(name)}&skill=${encodeURIComponent(skill)}`);
   }
 
   return (
@@ -149,6 +151,37 @@ const NameForm = () => {
         className="border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
         required
       />
+
+      {/* Skill selector */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <input
+            type="radio"
+            name="skill"
+            value="narrador"
+            checked={skill === "narrador"}
+            onChange={() => setSkill("narrador")}
+            style={{ accentColor: "#6366f1" }}
+          />
+          Narrador
+        </label>
+        <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <input
+            type="radio"
+            name="skill"
+            value="jogador"
+            checked={skill === "jogador"}
+            onChange={() => setSkill("jogador")}
+            style={{ accentColor: "#6366f1" }}
+          />
+          Jogador
+        </label>
+      </div>
+
+      <p style={{ color: "#f87171", fontSize: 12 }}>
+        ⚠️ Mudar o skill exigirá reconexão.
+      </p>
+
       <button
         type="submit"
         className="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700 transition"
