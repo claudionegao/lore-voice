@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import UserContext from "../context/UserContext";
 
 const NomePage = () => {
-  const { _client, users, setUsers } = useContext(UserContext);
+  const { _client } = useContext(UserContext);
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -13,92 +13,93 @@ const NomePage = () => {
   const skillParam = searchParams.get("skill") || "narrador";
 
   const [usuarios, setUsuarios] = useState([]);
-  const [selecionados, setSelecionados] = useState([]);
   const [volumes, setVolumes] = useState({});
-  const [meuUsuario, setMeuUsuario] = useState({ nome: nomeParam, skill: skillParam });
+  const [selecionados, setSelecionados] = useState([]);
+  const [meuUsuario, setMeuUsuario] = useState({
+    nome: nomeParam,
+    skill: skillParam,
+    id: "self",
+  });
 
-  // 🔹 Carrega usuários conectados via Agora (incluindo o próprio)
-  useEffect(() => {
-    async function carregarUsuariosAgora() {
-      if (!_client) return;
+  // 🔹 Atualiza lista com base no remoteUsers sempre que mudar
+  async function atualizarListaAgora() {
+    if (!_client) return;
 
-      try {
-        // Aguarda a conexão
-        if (_client.connectionState !== "CONNECTED") {
-          console.log("Aguardando conexão...");
-          return;
-        }
+    try {
+      const remoteUsers = _client.remoteUsers || [];
 
-        // Pega os usuários remotos conectados no canal
-        const remoteUsers = _client.remoteUsers || [];
-
-        // Monta a lista formatada
-        const conectados = remoteUsers.map((u) => ({
+      // Cria lista completa com o próprio usuário + remotos
+      const listaAtual = [remoteUsers.map((u) => ({
           nome: u.uid.split("@")[0],
           skill: u.uid.split("@")[1] || "jogador",
           id: u._uintid,
-        }));
+        })),
+      ];
 
-        // Adiciona o próprio usuário à lista
-        const todosUsuarios = [
-          { nome: nomeParam, skill: skillParam, id: "self" },
-          ...conectados,
-        ];
+      setUsuarios(listaAtual);
 
-        setUsers(todosUsuarios); // atualiza o contexto
-        setUsuarios(todosUsuarios); // atualiza localmente
-        setMeuUsuario({ nome: nomeParam, skill: skillParam });
-
-        // Cria volumes falsos visuais
-        const vols = Object.fromEntries(
-          todosUsuarios.map((u) => [u.nome, Math.floor(Math.random() * 100) + 1])
-        );
-        setVolumes(vols);
-      } catch (err) {
-        console.error("Erro ao buscar usuários no Agora:", err);
-      }
+      // Cria volumes visuais aleatórios (mock)
+      const vols = Object.fromEntries(
+        listaAtual.map((u) => [u.nome, Math.floor(Math.random() * 100) + 1])
+      );
+      setVolumes(vols);
+    } catch (err) {
+      console.error("Erro ao atualizar lista:", err);
     }
+  }
 
-    carregarUsuariosAgora();
+  // 🔹 Inicializa listeners de eventos do Agora
+  useEffect(() => {
+    if (!_client) return;
+
+    const handlePublish = async (user, mediaType) => {
+      await _client.subscribe(user, mediaType);
+      if (mediaType === "audio") user.audioTrack.play();
+    });
+    const handleJoin = (user) => {
+      console.log(`🔵 ${user.uid} entrou`);
+      atualizarListaAgora();
+    };
+
+    const handleLeave = (user) => {
+      console.log(`🔴 ${user.uid} saiu`);
+      atualizarListaAgora();
+    };
+
+    // Usuário publica áudio
+    _client.on("user-published",handlePublish);
+    _client.on("user-joined", handleJoin);
+    _client.on("user-left", handleLeave);
+
+    // Atualiza lista inicial
+    atualizarListaAgora();
+
+    return () => {
+      _client.off("user-published",handlePublish)
+      _client.off("user-joined", handleJoin);
+      _client.off("user-left", handleLeave);
+    };
   }, [_client]);
 
-  // 🔹 Atualiza o próprio usuário se mudar o contexto
-  useEffect(() => {
-    if (users && users.length > 0) {
-      const encontrado = users.find((u) => u.nome === nomeParam);
-      setMeuUsuario(encontrado || { nome: nomeParam, skill: skillParam });
-    }
-  }, [users, nomeParam, skillParam]);
-
-  // 🔹 Verifica conexão e redireciona se cair
+  // 🔹 Verifica conexão
   useEffect(() => {
     if (!_client || _client.connectionState !== "CONNECTED") {
       router.replace("/");
     }
   }, [_client]);
 
-  // 🔹 Atualiza a lista e os volumes sempre que mudar o contexto
-  useEffect(() => {
-    if (Array.isArray(users)) {
-      setUsuarios(users);
-      const vols = Object.fromEntries(
-        users.map((u) => [u.nome, Math.floor(Math.random() * 100) + 1])
-      );
-      setVolumes(vols);
-    }
-  }, [users]);
-
-  // 🔹 Desconectar do canal
+  // 🔹 Desconectar
   async function handleDesconectar() {
     try {
       await _client.leave();
+      console.log("Desconectado do canal");
     } catch (e) {
       console.warn("Erro ao sair:", e);
     }
     router.replace("/");
   }
 
-  // 🔹 Selecionar jogadores (apenas narrador)
+  // 🔹 Checkbox de seleção (apenas narrador)
   function handleCheckbox(usuario) {
     setSelecionados((prev) =>
       prev.includes(usuario)
@@ -107,11 +108,11 @@ const NomePage = () => {
     );
   }
 
-  // 🔹 Separar por função
+  // 🔹 Agrupa usuários
   const narradores = usuarios.filter((u) => u.skill === "narrador");
   const jogadores = usuarios.filter((u) => u.skill === "jogador");
 
-  // 🔹 Componente de barra de volume
+  // 🔹 Barra de volume fake (só visual)
   function VolumeBar({ value }) {
     return (
       <div
@@ -145,7 +146,7 @@ const NomePage = () => {
     );
   }
 
-  // 🔹 Renderiza listas de usuários
+  // 🔹 Lista de usuários
   function renderUserList(list) {
     return (
       <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
@@ -216,7 +217,7 @@ const NomePage = () => {
             color: "#6366f1",
           }}
         >
-          {meuUsuario?.nome || nomeParam} ({meuUsuario?.skill || skillParam})
+          {meuUsuario.nome} ({meuUsuario.skill})
         </h1>
 
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -269,8 +270,13 @@ const NomePage = () => {
           Narradores
         </div>
         {renderUserList(narradores)}
+
         <div
-          style={{ margin: "18px 0 10px 0", color: "#a5b4fc", fontWeight: 500 }}
+          style={{
+            margin: "18px 0 10px 0",
+            color: "#a5b4fc",
+            fontWeight: 500,
+          }}
         >
           Jogadores
         </div>

@@ -54,6 +54,7 @@ const NameForm = () => {
   }, []);
 
   // 🔹 Eventos de usuário RTC
+  /*
 useEffect(() => {
   if (!_client) return;
 
@@ -94,7 +95,7 @@ useEffect(() => {
     );
   }
 }, [_client, users]);
-
+*/
   // 🔹 Submissão do formulário
   async function handleSubmit(e) {
     e.preventDefault();
