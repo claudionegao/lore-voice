@@ -89,7 +89,7 @@ const NameForm = () => {
     if (!_client) return;
 
     _client.on("user-joined", async (user) => {
-      console.log(`user ${user.uid} entrou`);
+      console.log(`user ${user.uid} entrou agora: ${user._uintid}`);
       console.log(user);
       if (mediaType === "audio") user.audioTrack.play();
       await handleUserChange();
@@ -126,7 +126,7 @@ const NameForm = () => {
     });
     const { token } = await res.json();
 
-    await rtcClient.join(appId, "LoreVoice", token, name);
+    await rtcClient.join(appId, "LoreVoice", token, name+'@'+skill);
     const micTrack = await AgoraRTC.createMicrophoneAudioTrack();
     await rtcClient.publish([micTrack]);
     await waitForConnection(rtcClient);
