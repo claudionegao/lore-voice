@@ -64,6 +64,7 @@ const NomePage = () => {
     const handleStream = (uid, streamId, message) => {
         try {
           const data = JSON.parse(message.text);
+          console.log(data)
 
           if(data.type !== "audio-control") return; // ignora outras mensagens
           if(data.target !== meuUsuario.nome) return;  // só processa se for para mim
