@@ -86,7 +86,7 @@ const NameForm = () => {
 
   // Importa dinamicamente o SDK da Agora
   useEffect(() => {
-    import("agora-rtm-sdk").then((mod) => setAgoraRTM(mod.default));
+    import("agora-rtm-sdk").then((mod) => setAgoraRTM(mod));
     import("agora-rtc-sdk-ng").then((mod) => setAgoraRTC(mod.default));
   }, []);
 
