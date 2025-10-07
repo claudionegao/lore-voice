@@ -60,6 +60,8 @@ useEffect(() => {
   // Usuário entra
   _client.on("user-joined", async (user) => {
     console.log(`user ${user.uid.split('@')[0]} entrou`);
+    console.log('remoteusers')
+    console.log(_client.remoteUsers)
     const novoUsuario = { 
       nome: user.uid.split('@')[0], 
       skill: user.uid.split('@')[1] || 'jogador', 
@@ -79,6 +81,8 @@ useEffect(() => {
   // Usuário sai
   _client.on("user-left", async (user) => {
     console.log(`user ${user.uid.split('@')[0]} saiu`);
+    console.log('remoteusers')
+    console.log(_client.remoteUsers)
     const updatedUsers = users.filter(u => u.id !== user._uintid);
     setUsers(updatedUsers);
     console.log(updatedUsers);
