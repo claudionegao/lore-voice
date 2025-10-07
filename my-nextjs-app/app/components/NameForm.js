@@ -96,6 +96,12 @@ const NameForm = () => {
       await handleUserChange();
     });
 
+    _client.on("user-published", async (user, mediaType) => {
+      await _client.subscribe(user, mediaType);
+      if (mediaType === "audio") user.audioTrack.play();
+      await handleUserChange();
+    });
+
     _client.on("user-left", async (user) => {
       console.log(`user ${user.uid} saiu`);
       console.log(user);
