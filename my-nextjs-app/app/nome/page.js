@@ -5,9 +5,10 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import UserContext from '../context/UserContext';
 
 const NomePage = () => {
-  const { _client, users } = useContext(UserContext); 
+  const { _client, users, setUsers } = useContext(UserContext); // agora usa setUsers do contexto
   const router = useRouter();
   const searchParams = useSearchParams();
+
   const nomeParam = searchParams.get('nome') || '';
   const skillParam = searchParams.get('skill') || 'narrador';
 
@@ -16,13 +17,37 @@ const NomePage = () => {
   const [volumes, setVolumes] = useState({});
   const [meuUsuario, setMeuUsuario] = useState({ nome: nomeParam, skill: skillParam });
 
-  // 🔹 Define informações do próprio usuário
+  // 🔹 Carrega usuários do DB ao iniciar (para popular o contexto)
+  useEffect(() => {
+    async function carregarUsuarios() {
+      try {
+        const res = await fetch('/api/getUsers');
+        const data = await res.json();
+
+        if (Array.isArray(data)) {
+          setUsers(data); // atualiza o contexto
+          setUsuarios(data); // atualiza localmente também
+
+          const vols = Object.fromEntries(
+            data.map(u => [u.nome, Math.floor(Math.random() * 100) + 1])
+          );
+          setVolumes(vols);
+        }
+      } catch (err) {
+        console.error("Erro ao buscar usuários:", err);
+      }
+    }
+
+    carregarUsuarios();
+  }, []);
+
+  // 🔹 Atualiza o próprio usuário (nome + skill)
   useEffect(() => {
     if (users && users.length > 0) {
-      // Define o primeiro como o próprio usuário (sem id do agora)
-      setMeuUsuario(users[0]);
+      const encontrado = users.find(u => u.nome === nomeParam);
+      setMeuUsuario(encontrado || { nome: nomeParam, skill: skillParam });
     }
-  }, [users]);
+  }, [users, nomeParam, skillParam]);
 
   // 🔹 Verifica conexão
   useEffect(() => {
@@ -35,16 +60,20 @@ const NomePage = () => {
   useEffect(() => {
     if (Array.isArray(users)) {
       setUsuarios(users);
-
-      // Gera volumes falsos pra cada usuário (só visual)
-      const vols = Object.fromEntries(users.map(u => [u.nome, Math.floor(Math.random() * 100) + 1]));
+      const vols = Object.fromEntries(
+        users.map(u => [u.nome, Math.floor(Math.random() * 100) + 1])
+      );
       setVolumes(vols);
     }
   }, [users]);
 
   // 🔹 Desconectar do canal
   async function handleDesconectar() {
-    await _client.leave();
+    try {
+      await _client.leave();
+    } catch (e) {
+      console.warn("Erro ao sair:", e);
+    }
     router.replace("/");
   }
 
@@ -150,7 +179,9 @@ const NomePage = () => {
           fontWeight: 700,
           margin: 0,
           color: "#6366f1",
-        }}>{meuUsuario.nome} ({meuUsuario.skill})</h1>
+        }}>
+          {meuUsuario?.nome || nomeParam} ({meuUsuario?.skill || skillParam})
+        </h1>
 
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{
