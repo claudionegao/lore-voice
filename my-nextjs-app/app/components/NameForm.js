@@ -78,47 +78,19 @@ const NameForm = () => {
     }
   }
 
-  // 🔹 Import dinâmico (RTC + RTM)
+  // 🔹 Import dinâmico do SDK RTC e RTM (somente client-side)
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // RTC via import
+    // RTC
     import("agora-rtc-sdk-ng")
-      .then((mod) => setAgoraRTC(mod.default))
-      .catch((err) => console.error("❌ Erro ao importar AgoraRTC:", err));
+      .then((mod) => setAgoraRTC(mod.default || mod))
+      .catch((err) => console.error("Erro ao carregar AgoraRTC", err));
 
-    // RTM via script global com fallback
-    const script = document.createElement("script");
-    script.src = "https://cdn.jsdelivr.net/npm/agora-rtm-sdk@1.5.1/AgoraRTM.min.js";
-    script.async = true;
-    document.body.appendChild(script);
-
-    const checkRTM = setInterval(() => {
-      if (window.AgoraRTM) {
-        clearInterval(checkRTM);
-        setAgoraRTM(window.AgoraRTM);
-        console.log("✅ AgoraRTM detectado (via polling)");
-      }
-    }, 500);
-
-    script.onload = () => {
-      if (window.AgoraRTM) {
-        setAgoraRTM(window.AgoraRTM);
-        console.log("✅ AgoraRTM carregado via script global");
-        clearInterval(checkRTM);
-      } else {
-        console.error("❌ Script carregou, mas window.AgoraRTM não existe");
-      }
-    };
-
-    script.onerror = (err) => {
-      console.error("❌ Erro ao carregar AgoraRTM script:", err);
-    };
-
-    return () => {
-      clearInterval(checkRTM);
-      document.body.removeChild(script);
-    };
+    // RTM
+    import("agora-rtm-sdk")
+      .then((mod) => setAgoraRTM(mod.default || mod))
+      .catch((err) => console.error("Erro ao carregar AgoraRTM", err));
   }, []);
 
   // 🔹 Eventos de usuário
@@ -152,7 +124,7 @@ const NameForm = () => {
     }
   }, [_client]);
 
-  // 🔹 Submissão
+  // 🔹 Submissão do formulário
   async function handleSubmit(e) {
     e.preventDefault();
     if (!AgoraRTC || !AgoraRTM) return;
@@ -177,6 +149,7 @@ const NameForm = () => {
     await client.publish([micTrack]);
     await waitForConnection(client);
 
+    // Atualiza DB inicial
     await fetch("/api/updateDB", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
