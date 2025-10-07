@@ -64,6 +64,7 @@ const NameForm = () => {
       ...prev.filter(u => u.id !== user._uintid), // evita duplicar
       { nome: user.uid.split('@')[0], skill: user.uid.split('@')[1] || 'jogador', id: user._uintid }
     ]);
+    console.log(users);
   });
 
   // Usuário publica áudio
@@ -76,11 +77,12 @@ const NameForm = () => {
   _client.on("user-left", async (user) => {
     console.log(`user ${user._uintid} saiu`);
     setUsers(prev => prev.filter(u => u.id !== user._uintid));
+    console.log(users);
   });
 
   if (_client.connectionState === "CONNECTED") {
     router.push(
-      `/nome?nome=${encodeURIComponent(name)}&skill=${encodeURIComponent(skill)}`
+      `/nome?nome=${encodeURIComponent(name.split('@')[0])}&skill=${encodeURIComponent(skill)}`
     );
   }
 }, [_client]);
