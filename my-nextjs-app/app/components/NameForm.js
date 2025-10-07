@@ -38,21 +38,9 @@ const NameForm = () => {
       .catch((err) => console.error("Erro ao carregar AgoraRTC", err));
 
     import("agora-rtm-sdk")
-      .then((mod) => {
-        // Detecta a forma correta do módulo
-        const RTM = mod.default || mod;
-        if (typeof RTM.createInstance === "function") {
-          setAgoraRTM(() => RTM);
-        } else if (typeof RTM === "function") {
-          // SDK exporta diretamente a classe AgoraRTM
-          setAgoraRTM(() => ({
-            createInstance: (...args) => new RTM(...args),
-          }));
-        } else {
-          console.error("Forma inesperada de exportação do agora-rtm-sdk:", mod);
-        }
-      })
+      .then((mod) => setAgoraRTM(const RTM = mod.default || mod)
       .catch((err) => console.error("Erro ao carregar AgoraRTM", err));
+
   }, []);
 
   // 🔹 Busca usuários no DB
@@ -129,11 +117,12 @@ const NameForm = () => {
   // 🔹 Botão conectar
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!AgoraRTC || !AgoraRTM) return;
+    if (!AgoraRTC) return;
 
     console.log("🔹 Iniciando conexão RTM e RTC...");
 
     // --- RTM ---
+    console.log(AgoraRTM)
     const rtm = AgoraRTM.createInstance(appId);
     await rtm.login({ uid: name });
     const Mchannel = await rtm.createChannel("SkillChannel");
