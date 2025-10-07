@@ -2,7 +2,7 @@
 import React, { useState, useContext, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import UserContext from "../context/UserContext";
-import AgoraRTM from "module";"agora-rtm-sdk"
+import AgoraRTM from "agora-rtm-sdk"
 
 const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID;
 
