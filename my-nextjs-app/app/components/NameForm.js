@@ -88,8 +88,7 @@ const NameForm = () => {
   useEffect(() => {
     if (!_client) return;
 
-    _client.on("user-joined", async (user, mediaType) => {
-      await _client.subscribe(user, mediaType);
+    _client.on("user-joined", async (user) => {
       console.log(`user ${user.uid} entrou`);
       console.log(user);
       if (mediaType === "audio") user.audioTrack.play();
