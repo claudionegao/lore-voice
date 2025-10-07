@@ -64,8 +64,11 @@ const NomePage = () => {
     };
 
     _client.enableAudioVolumeIndicator();
-    
-    const handleVolume = (volumes) => {
+
+    const handleVolume = (_volumes) => {
+      console.log("_volumes")
+      console.log(_volumes)
+      console.log("volumes")
       console.log(volumes)
     };
     // Usuário publica áudio
