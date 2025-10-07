@@ -64,9 +64,7 @@ const NomePage = () => {
     };
 
     const handleVolume = (volumes) => {
-      volumes.forEach(({ uid, level }) => {
-        console.log(`${uid} volume: ${level}`);
-      });
+      console.log(volumes)
     };
     // Usuário publica áudio
     _client.on("volume-indicator",handleVolume);
