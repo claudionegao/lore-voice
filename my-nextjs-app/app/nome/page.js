@@ -50,21 +50,18 @@ const NomePage = () => {
     const handleJoin = async (user) => {
       console.log(`🔵 ${user.uid} entrou`);
 
-      // Extrai skill do uid
-      const skill = user.uid.split("@")[1] || "jogador";
+      // extrai skill do UID
+      const skill = typeof user.uid === "string" ? user.uid.split("@")[1] : "jogador";
 
-      // Se o usuário atual for jogador, só subscribe em outros jogadores
-      if (meuUsuario.skill === "jogador" && skill === "jogador") {
-        await _client.subscribe(user, "audio");
-        if (user.audioTrack) user.audioTrack.play();
+      // sempre subscribe para receber o áudio
+      await _client.subscribe(user, "audio");
+
+      // toca apenas se for jogador
+      if (skill === "jogador") {
+        user.audioTrack.play();
       }
 
-      // Se o usuário atual for narrador, subscribe em todos (opcional, depende da regra)
-      if (meuUsuario.skill === "narrador") {
-        await _client.subscribe(user, "audio");
-        if (user.audioTrack) user.audioTrack.play();
-      }
-
+      // atualiza lista de usuários
       atualizarListaAgora();
     };
 
@@ -85,6 +82,18 @@ const NomePage = () => {
           console.warn("Erro ao processar DataStream:", e);
         }
     };
+
+    _client.remoteUsers.forEach(async (user) => {
+      await _client.subscribe(user, "audio"); // garante receber o stream
+
+      // extrai skill do UID
+      const skill = typeof user.uid === "string" ? user.uid.split("@")[1] : "jogador";
+
+      // toca o áudio localmente apenas se for jogador
+      if (skill === "jogador") {
+        user.audioTrack.play();
+      }
+    });
 
     _client.enableAudioVolumeIndicator();
 
@@ -160,7 +169,7 @@ const NomePage = () => {
         ? prev.filter((u) => u !== usuario)
         : [...prev, usuario]
     );
-    
+
     usuarios
     .filter(u => u.skill === "jogador")
     .forEach(u => {
