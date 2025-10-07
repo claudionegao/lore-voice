@@ -47,14 +47,43 @@ const NomePage = () => {
       await _client.subscribe(user, mediaType);
       if (mediaType === "audio") user.audioTrack.play();
     };
-    const handleJoin = (user) => {
+    const handleJoin = async (user) => {
       console.log(`🔵 ${user.uid} entrou`);
+
+      // Extrai skill do uid
+      const skill = user.uid.split("@")[1] || "jogador";
+
+      // Se o usuário atual for jogador, só subscribe em outros jogadores
+      if (meuUsuario.skill === "jogador" && skill === "jogador") {
+        await _client.subscribe(user, "audio");
+        if (user.audioTrack) user.audioTrack.play();
+      }
+
+      // Se o usuário atual for narrador, subscribe em todos (opcional, depende da regra)
+      if (meuUsuario.skill === "narrador") {
+        await _client.subscribe(user, "audio");
+        if (user.audioTrack) user.audioTrack.play();
+      }
+
       atualizarListaAgora();
     };
 
     const handleLeave = (user) => {
       console.log(`🔴 ${user.uid} saiu`);
       atualizarListaAgora();
+    };
+
+    const handleStream = (uid, streamId, message) => {
+        try {
+          const data = JSON.parse(message.text);
+
+          if(data.type !== "audio-control") return; // ignora outras mensagens
+          if(data.target !== meuUsuario.nome) return;  // só processa se for para mim
+
+          console.log("🔹 Mensagem DataStream recebida para mim:", data);
+        } catch(e) {
+          console.warn("Erro ao processar DataStream:", e);
+        }
     };
 
     _client.enableAudioVolumeIndicator();
@@ -82,6 +111,7 @@ const NomePage = () => {
       });
     };
     // Usuário publica áudio
+    _client.on("stream-message",handleStream);
     _client.on("volume-indicator",handleVolume);
     _client.on("user-published",handlePublish);
     _client.on("user-joined", handleJoin);
@@ -91,6 +121,8 @@ const NomePage = () => {
     atualizarListaAgora();
 
     return () => {
+      _client.off("stream-message", handleStream);
+      _client.off("volume-indicator",handleVolume);
       _client.off("user-published",handlePublish)
       _client.off("user-joined", handleJoin);
       _client.off("user-left", handleLeave);
@@ -128,6 +160,19 @@ const NomePage = () => {
         ? prev.filter((u) => u !== usuario)
         : [...prev, usuario]
     );
+    
+    usuarios
+    .filter(u => u.skill === "jogador")
+    .forEach(u => {
+      const action = novosSelecionados.includes(u.nome) ? "unmute" : "mute";
+      const payload = {
+        type: "audio-control",
+        target: u.nome,
+        action,
+        from: meuUsuario.nome // narrador que envia
+      };
+      if(_client._dataStreamId) _client.sendStreamMessage(_client._dataStreamId, JSON.stringify(payload));
+    });
   }
 
   // 🔹 Agrupa usuários
