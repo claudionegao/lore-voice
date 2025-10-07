@@ -58,12 +58,9 @@ const NameForm = () => {
 
     async function criarDataStream() {
       try {
-        // O createDataStream retorna um ID
-        const streamId = await _client.createDataStream({
-          reliable: true,   // garante entrega
-          ordered: true     // mantém ordem
-        });
-        _client._dataStreamId = streamId; // armazena para uso posterior
+        const [dataTrack] = await AgoraRTC.createDataStream({ reliable: true, ordered: true });
+        await _client.publish(dataTrack);
+        _client._dataTrack = dataTrack;
         console.log("DataStream criado:", streamId);
       } catch (e) {
         console.error("Erro ao criar DataStream:", e);

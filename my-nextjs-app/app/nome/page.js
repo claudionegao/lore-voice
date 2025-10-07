@@ -172,8 +172,8 @@ const NomePage = () => {
         action,
         from: meuUsuario.id // narrador que envia
       };
-      console.log(_client._dataStreamId)
-      if (_client._dataStreamId) _client.sendStreamMessage(_client._dataStreamId, JSON.stringify(payload));
+      console.log(_client._dataTrack)
+      if (_client._dataTrack) _client.send(_client._dataTrack, JSON.stringify(payload));
     }
 
   // 🔹 Agrupa usuários
