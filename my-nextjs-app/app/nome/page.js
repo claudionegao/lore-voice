@@ -27,17 +27,12 @@ const NomePage = () => {
 
     try {
       const remoteUsers = _client.remoteUsers || [];
-      console.log("remoteUsers")
-      console.log(remoteUsers)
       // Cria lista completa com o próprio usuário + remotos
       const listaAtual = remoteUsers.map((u) => ({
           nome: u.uid.split("@")[0],
           skill: u.uid.split("@")[1] || "jogador",
           id: u._uintid,
       }));
-
-      console.log("listaAtual")
-      console.log(listaAtual)
       setUsuarios(listaAtual);
 
       // Cria volumes visuais aleatórios (mock)
@@ -68,7 +63,13 @@ const NomePage = () => {
       atualizarListaAgora();
     };
 
+    const handleVolume = (volumes) => {
+      volumes.forEach(({ uid, level }) => {
+        console.log(`${uid} volume: ${level}`);
+      });
+    };
     // Usuário publica áudio
+    _client.on("volume-indicator",handleVolume);
     _client.on("user-published",handlePublish);
     _client.on("user-joined", handleJoin);
     _client.on("user-left", handleLeave);
