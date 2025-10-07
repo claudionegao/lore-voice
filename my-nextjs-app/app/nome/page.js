@@ -76,7 +76,9 @@ const NomePage = () => {
     });
 
     // Envia notificação para outros usuários via _client
-    console.log(_client)
+    console.log("🔍 Tipo de client salvo no contexto:", _client);
+    console.log("Tem sendMessage?", typeof _client?.sendMessage);
+    console.log("Tem channel?", _client?.channel);
     _client.sendMessage({
       type: 'papelChanged',
       data: { nome, skill: novoPapel }
