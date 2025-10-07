@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import UserContext from '../context/UserContext';
 
 const NomePage = () => {
-  const { _client, users } = useContext(UserContext); 
+  const { _client,_mClient, users } = useContext(UserContext); 
   const router = useRouter();
   const searchParams = useSearchParams();
   const nome = searchParams.get('nome') || '';
@@ -76,10 +76,7 @@ const NomePage = () => {
     });
 
     // Envia notificação para outros usuários via _client
-    console.log("🔍 Tipo de client salvo no contexto:", _client);
-    console.log("Tem sendMessage?", typeof _client?.sendMessage);
-    console.log("Tem channel?", _client?.channel);
-    _client.sendMessage({
+    _mClient.sendMessage({
       type: 'papelChanged',
       data: { nome, skill: novoPapel }
     });

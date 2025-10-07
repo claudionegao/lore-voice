@@ -8,8 +8,9 @@ const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID;
 const NameForm = () => {
   const [name, setName] = useState("");
   const [AgoraRTC, setAgoraRTC] = useState(null);
+  const [AgoraRTM, setAgoraRTM] = useState(null);
   const router = useRouter();
-  const { _client, _setClient, setUsers } = useContext(UserContext);
+  const { _client, _mClient , _setClient, setUsers,_setMclient } = useContext(UserContext);
 
   // Função auxiliar — espera até o cliente estar realmente conectado
   function waitForConnection(client, timeout = 5000) {
@@ -85,6 +86,7 @@ const NameForm = () => {
 
   // Importa dinamicamente o SDK da Agora
   useEffect(() => {
+    import("agora-rtm-sdk")
     import("agora-rtc-sdk-ng").then((mod) => setAgoraRTC(mod.default));
   }, []);
 
@@ -92,7 +94,7 @@ const NameForm = () => {
   useEffect(() => {
     if (!_client) return;
 
-    _client.on('message', (msg) => {
+    _mClient.on('message', (msg) => {
       if (msg.type === 'papelChanged') {
         setUsers(prev =>
           prev.map(u => u.nome === msg.data.nome ? { ...u, skill: msg.data.skill } : u)
@@ -123,7 +125,12 @@ const NameForm = () => {
   async function handleSubmit(e) {
     e.preventDefault();
     if (!AgoraRTC) return;
+    if (!AgoraRTM) return;
+    const rtm = AgoraRTM.createInstance("9b5dc5074e5d4193ad5c4e002fa9270a");
+    await rtm.login({ uid: name });
 
+    const Mchannel = await rtm.createChannel("SkillChannel");
+    await Mchannel.join();
     const client = await AgoraRTC.createClient({
       mode: "rtc",
       codec: "vp8",
@@ -157,6 +164,7 @@ const NameForm = () => {
     });
 
     _setClient(client);
+    _setMclient(Mchannel);
   }
 
   return (
