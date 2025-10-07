@@ -163,16 +163,16 @@ const NomePage = () => {
 
       // atualiza o estado
       setSelecionados(novosSelecionados);
-      console.log(selecionados)
+      console.log(_client)
       // envia mensagem para os jogadores
       const action = novosSelecionados.includes(usuario.nome) ? "unmute" : "mute";
       const payload = {
         type: "audio-control",
-        target: usuario.nome,
+        target: usuario.id,
         action,
         from: meuUsuario.nome // narrador que envia
       };
-      console.log(payload)
+      console.log(_client._dataStreamId)
       if (_client._dataStreamId) _client.sendStreamMessage(_client._dataStreamId, JSON.stringify(payload));
     }
 
