@@ -162,20 +162,17 @@ const NomePage = () => {
 
       // atualiza o estado
       setSelecionados(novosSelecionados);
-
+      console.log(selecionados)
       // envia mensagem para os jogadores
-      usuarios
-        .filter(u => u.skill === "jogador")
-        .forEach(u => {
-          const action = novosSelecionados.includes(u.nome) ? "unmute" : "mute";
-          const payload = {
-            type: "audio-control",
-            target: u.nome,
-            action,
-            from: meuUsuario.nome // narrador que envia
-          };
-          if (_client._dataStreamId) _client.sendStreamMessage(_client._dataStreamId, JSON.stringify(payload));
-        });
+      const action = novosSelecionados.includes(u.nome) ? "unmute" : "mute";
+      const payload = {
+        type: "audio-control",
+        target: usuario.nome,
+        action,
+        from: meuUsuario.nome // narrador que envia
+      };
+      console.log(payload)
+      if (_client._dataStreamId) _client.sendStreamMessage(_client._dataStreamId, JSON.stringify(payload));
     }
 
   // 🔹 Agrupa usuários
@@ -235,8 +232,8 @@ const NomePage = () => {
             {u.skill === "jogador" && meuUsuario.skill === "narrador" && (
               <input
                 type="checkbox"
-                checked={selecionados.includes(u.nome)}
-                onChange={() => handleCheckbox(u.nome)}
+                checked={selecionados.includes(u)}
+                onChange={() => handleCheckbox(u)}
                 style={{ accentColor: "#6366f1" }}
               />
             )}
