@@ -184,7 +184,7 @@ const NomePage = () => {
               gap: 8,
             }}
           >
-            {meuUsuario.skill === "narrador" && u.nome !== meuUsuario.nome && (
+            {u.skill === "jogador" && meuUsuario.skill === "narrador" && (
               <input
                 type="checkbox"
                 checked={selecionados.includes(u.nome)}
