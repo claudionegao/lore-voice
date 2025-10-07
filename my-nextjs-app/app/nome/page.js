@@ -1,67 +1,88 @@
 "use client";
 
-import React, { Suspense, useContext, useState, useEffect } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import UserContext from '../context/UserContext';
+import React, { Suspense, useContext, useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import UserContext from "../context/UserContext";
 
 const NomePage = () => {
-  const { _client, users, setUsers } = useContext(UserContext); // agora usa setUsers do contexto
+  const { _client, users, setUsers } = useContext(UserContext);
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const nomeParam = searchParams.get('nome') || '';
-  const skillParam = searchParams.get('skill') || 'narrador';
+  const nomeParam = searchParams.get("nome") || "";
+  const skillParam = searchParams.get("skill") || "narrador";
 
   const [usuarios, setUsuarios] = useState([]);
   const [selecionados, setSelecionados] = useState([]);
   const [volumes, setVolumes] = useState({});
   const [meuUsuario, setMeuUsuario] = useState({ nome: nomeParam, skill: skillParam });
 
-  // 🔹 Carrega usuários do DB ao iniciar (para popular o contexto)
+  // 🔹 Carrega usuários conectados via Agora (incluindo o próprio)
   useEffect(() => {
-    async function carregarUsuarios() {
+    async function carregarUsuariosAgora() {
+      if (!_client) return;
+
       try {
-        const res = await fetch('/api/getUsers');
-        const data = await res.json();
-
-        if (Array.isArray(data)) {
-          setUsers(data); // atualiza o contexto
-          setUsuarios(data); // atualiza localmente também
-
-          const vols = Object.fromEntries(
-            data.map(u => [u.nome, Math.floor(Math.random() * 100) + 1])
-          );
-          setVolumes(vols);
+        // Aguarda a conexão
+        if (_client.connectionState !== "CONNECTED") {
+          console.log("Aguardando conexão...");
+          return;
         }
+
+        // Pega os usuários remotos conectados no canal
+        const remoteUsers = _client.remoteUsers || [];
+
+        // Monta a lista formatada
+        const conectados = remoteUsers.map((u) => ({
+          nome: u.uid.split("@")[0],
+          skill: u.uid.split("@")[1] || "jogador",
+          id: u._uintid,
+        }));
+
+        // Adiciona o próprio usuário à lista
+        const todosUsuarios = [
+          { nome: nomeParam, skill: skillParam, id: "self" },
+          ...conectados,
+        ];
+
+        setUsers(todosUsuarios); // atualiza o contexto
+        setUsuarios(todosUsuarios); // atualiza localmente
+        setMeuUsuario({ nome: nomeParam, skill: skillParam });
+
+        // Cria volumes falsos visuais
+        const vols = Object.fromEntries(
+          todosUsuarios.map((u) => [u.nome, Math.floor(Math.random() * 100) + 1])
+        );
+        setVolumes(vols);
       } catch (err) {
-        console.error("Erro ao buscar usuários:", err);
+        console.error("Erro ao buscar usuários no Agora:", err);
       }
     }
 
-    carregarUsuarios();
-  }, []);
+    carregarUsuariosAgora();
+  }, [_client]);
 
-  // 🔹 Atualiza o próprio usuário (nome + skill)
+  // 🔹 Atualiza o próprio usuário se mudar o contexto
   useEffect(() => {
     if (users && users.length > 0) {
-      const encontrado = users.find(u => u.nome === nomeParam);
+      const encontrado = users.find((u) => u.nome === nomeParam);
       setMeuUsuario(encontrado || { nome: nomeParam, skill: skillParam });
     }
   }, [users, nomeParam, skillParam]);
 
-  // 🔹 Verifica conexão
+  // 🔹 Verifica conexão e redireciona se cair
   useEffect(() => {
     if (!_client || _client.connectionState !== "CONNECTED") {
       router.replace("/");
     }
   }, [_client]);
 
-  // 🔹 Atualiza lista de usuários sempre que mudar no contexto
+  // 🔹 Atualiza a lista e os volumes sempre que mudar o contexto
   useEffect(() => {
     if (Array.isArray(users)) {
       setUsuarios(users);
       const vols = Object.fromEntries(
-        users.map(u => [u.nome, Math.floor(Math.random() * 100) + 1])
+        users.map((u) => [u.nome, Math.floor(Math.random() * 100) + 1])
       );
       setVolumes(vols);
     }
@@ -79,38 +100,47 @@ const NomePage = () => {
 
   // 🔹 Selecionar jogadores (apenas narrador)
   function handleCheckbox(usuario) {
-    setSelecionados(prev =>
+    setSelecionados((prev) =>
       prev.includes(usuario)
-        ? prev.filter(u => u !== usuario)
+        ? prev.filter((u) => u !== usuario)
         : [...prev, usuario]
     );
   }
 
   // 🔹 Separar por função
-  const narradores = usuarios.filter(u => u.skill === "narrador");
-  const jogadores = usuarios.filter(u => u.skill === "jogador");
+  const narradores = usuarios.filter((u) => u.skill === "narrador");
+  const jogadores = usuarios.filter((u) => u.skill === "jogador");
 
   // 🔹 Componente de barra de volume
   function VolumeBar({ value }) {
     return (
-      <div style={{
-        width: 48,
-        height: 10,
-        background: "#181824",
-        borderRadius: 4,
-        overflow: "hidden",
-        border: "1px solid #282846",
-        marginLeft: 8,
-        marginRight: 4,
-        display: "flex",
-        alignItems: "center"
-      }}>
-        <div style={{
-          width: `${value}%`,
-          height: "100%",
-          background: value > 70 ? "#22c55e" : value > 30 ? "#eab308" : "#ef4444",
-          transition: "width 0.3s"
-        }} />
+      <div
+        style={{
+          width: 48,
+          height: 10,
+          background: "#181824",
+          borderRadius: 4,
+          overflow: "hidden",
+          border: "1px solid #282846",
+          marginLeft: 8,
+          marginRight: 4,
+          display: "flex",
+          alignItems: "center",
+        }}
+      >
+        <div
+          style={{
+            width: `${value}%`,
+            height: "100%",
+            background:
+              value > 70
+                ? "#22c55e"
+                : value > 30
+                ? "#eab308"
+                : "#ef4444",
+            transition: "width 0.3s",
+          }}
+        />
       </div>
     );
   }
@@ -151,48 +181,56 @@ const NomePage = () => {
   }
 
   return (
-    <div style={{
-      maxWidth: 900,
-      margin: "40px auto",
-      display: "flex",
-      flexDirection: "row",
-      gap: 32,
-      alignItems: "flex-start",
-      justifyContent: "center",
-    }}>
-      <div style={{
-        background: "#23233a",
-        borderRadius: 16,
-        padding: 32,
-        boxShadow: "0 4px 24px 0 #0006",
-        color: "#f3f3f3",
+    <div
+      style={{
+        maxWidth: 900,
+        margin: "40px auto",
         display: "flex",
-        flexDirection: "column",
-        gap: 24,
-        alignItems: "stretch",
-        minWidth: 320,
-        flex: 1,
-      }}>
-        <h1 style={{
-          textAlign: "center",
-          fontSize: "2rem",
-          fontWeight: 700,
-          margin: 0,
-          color: "#6366f1",
-        }}>
+        flexDirection: "row",
+        gap: 32,
+        alignItems: "flex-start",
+        justifyContent: "center",
+      }}
+    >
+      <div
+        style={{
+          background: "#23233a",
+          borderRadius: 16,
+          padding: 32,
+          boxShadow: "0 4px 24px 0 #0006",
+          color: "#f3f3f3",
+          display: "flex",
+          flexDirection: "column",
+          gap: 24,
+          alignItems: "stretch",
+          minWidth: 320,
+          flex: 1,
+        }}
+      >
+        <h1
+          style={{
+            textAlign: "center",
+            fontSize: "2rem",
+            fontWeight: 700,
+            margin: 0,
+            color: "#6366f1",
+          }}
+        >
           {meuUsuario?.nome || nomeParam} ({meuUsuario?.skill || skillParam})
         </h1>
 
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{
-            width: 12,
-            height: 12,
-            borderRadius: "50%",
-            background: "#22c55e",
-            display: "inline-block",
-            marginRight: 8,
-            boxShadow: "0 0 6px #22c55e88",
-          }} />
+          <span
+            style={{
+              width: 12,
+              height: 12,
+              borderRadius: "50%",
+              background: "#22c55e",
+              display: "inline-block",
+              marginRight: 8,
+              boxShadow: "0 0 6px #22c55e88",
+            }}
+          />
           <span style={{ fontWeight: 500, color: "#b3b3cc" }}>Conectado</span>
         </div>
 
@@ -215,19 +253,27 @@ const NomePage = () => {
         </button>
       </div>
 
-      <div style={{
-        border: "1px solid #282846",
-        borderRadius: 10,
-        padding: "24px 20px",
-        background: "#232345",
-        minWidth: 220,
-        maxWidth: 280,
-        flex: "0 0 220px",
-        boxSizing: "border-box",
-      }}>
-        <div style={{ marginBottom: 10, color: "#a5b4fc", fontWeight: 500 }}>Narradores</div>
+      <div
+        style={{
+          border: "1px solid #282846",
+          borderRadius: 10,
+          padding: "24px 20px",
+          background: "#232345",
+          minWidth: 220,
+          maxWidth: 280,
+          flex: "0 0 220px",
+          boxSizing: "border-box",
+        }}
+      >
+        <div style={{ marginBottom: 10, color: "#a5b4fc", fontWeight: 500 }}>
+          Narradores
+        </div>
         {renderUserList(narradores)}
-        <div style={{ margin: "18px 0 10px 0", color: "#a5b4fc", fontWeight: 500 }}>Jogadores</div>
+        <div
+          style={{ margin: "18px 0 10px 0", color: "#a5b4fc", fontWeight: 500 }}
+        >
+          Jogadores
+        </div>
         {renderUserList(jogadores)}
       </div>
     </div>
