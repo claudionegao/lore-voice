@@ -27,19 +27,13 @@ const NomePage = () => {
 
     try {
       const remoteUsers = _client.remoteUsers || [];
-      // Cria lista completa com o próprio usuário + remotos
+      // Cria lista completa com so remotos
       const listaAtual = remoteUsers.map((u) => ({
           nome: u.uid.split("@")[0],
           skill: u.uid.split("@")[1] || "jogador",
           id: u._uintid,
       }));
       setUsuarios(listaAtual);
-
-      // Cria volumes visuais aleatórios (mock)
-      const vols = Object.fromEntries(
-        listaAtual.map((u) => [u.nome, Math.floor(Math.random() * 100) + 1])
-      );
-      setVolumes(vols);
     } catch (err) {
       console.error("Erro ao atualizar lista:", err);
     }
@@ -65,11 +59,27 @@ const NomePage = () => {
 
     _client.enableAudioVolumeIndicator();
 
-    const handleVolume = (_volumes) => {
-      console.log("_volumes")
-      console.log(_volumes)
-      console.log("volumes")
-      console.log(volumes)
+    const handleVolume = (volumesInfo) => {
+      setVolumes(prev => {
+        const atualizado = { ...prev };
+
+        volumesInfo.forEach(({ uid, level }) => {
+          let nome = "";
+
+          if (uid === 0) {
+            // volume local
+            nome = meuUsuario.nome;
+          } else if (typeof uid === "string") {
+            nome = uid.split("@")[0];
+          }
+
+          if (nome) {
+            atualizado[nome] = Math.min(Math.round(level), 100);
+          }
+        });
+
+        return atualizado;
+      });
     };
     // Usuário publica áudio
     _client.on("volume-indicator",handleVolume);
@@ -97,8 +107,14 @@ const NomePage = () => {
   // 🔹 Desconectar
   async function handleDesconectar() {
     try {
+      if (_client.localTracks && _client.localTracks.length > 0) {
+        _client.localTracks.forEach(track => {
+          track.stop();
+          track.close();
+        });
+      }
       await _client.leave();
-      console.log("Desconectado do canal");
+      console.log("🔴 Desconectado e microfone parado");
     } catch (e) {
       console.warn("Erro ao sair:", e);
     }
@@ -221,9 +237,14 @@ const NomePage = () => {
             fontWeight: 700,
             margin: 0,
             color: "#6366f1",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: 10,
           }}
         >
           {meuUsuario.nome} ({meuUsuario.skill})
+          <VolumeBar value={volumes[meuUsuario.nome] ?? 0} />
         </h1>
 
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
