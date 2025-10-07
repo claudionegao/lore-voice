@@ -130,7 +130,7 @@ const NameForm = () => {
   // 🔹 Submissão
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!AgoraRTC || !AgoraRTM) return;
+    if (!AgoraRTC) return;
 
     // RTM
     const rtm = AgoraRTM.createInstance(appId);
