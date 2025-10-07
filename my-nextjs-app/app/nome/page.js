@@ -45,21 +45,12 @@ const NomePage = () => {
 
     const handlePublish = async (user, mediaType) => {
       await _client.subscribe(user, mediaType);
-      if (mediaType === "audio") user.audioTrack.play();
+      const skill = typeof user.uid === "string" ? user.uid.split("@")[1] : "jogador";
+      if (mediaType === "audio" && skill === "jogador") user.audioTrack.play();
+
     };
     const handleJoin = async (user) => {
       console.log(`🔵 ${user.uid} entrou`);
-
-      // extrai skill do UID
-      const skill = typeof user.uid === "string" ? user.uid.split("@")[1] : "jogador";
-
-      // sempre subscribe para receber o áudio
-      await _client.subscribe(user, "audio");
-
-      // toca apenas se for jogador
-      if (skill === "jogador") {
-        user.audioTrack.play();
-      }
 
       // atualiza lista de usuários
       atualizarListaAgora();
@@ -163,26 +154,29 @@ const NomePage = () => {
   }
 
   // 🔹 Checkbox de seleção (apenas narrador)
-  function handleCheckbox(usuario) {
-    setSelecionados((prev) =>
-      prev.includes(usuario)
-        ? prev.filter((u) => u !== usuario)
-        : [...prev, usuario]
-    );
+    function handleCheckbox(usuario) {
+      // calcula a nova lista de selecionados
+      const novosSelecionados = selecionados.includes(usuario)
+        ? selecionados.filter((u) => u !== usuario)
+        : [...selecionados, usuario];
 
-    usuarios
-    .filter(u => u.skill === "jogador")
-    .forEach(u => {
-      const action = novosSelecionados.includes(u.nome) ? "unmute" : "mute";
-      const payload = {
-        type: "audio-control",
-        target: u.nome,
-        action,
-        from: meuUsuario.nome // narrador que envia
-      };
-      if(_client._dataStreamId) _client.sendStreamMessage(_client._dataStreamId, JSON.stringify(payload));
-    });
-  }
+      // atualiza o estado
+      setSelecionados(novosSelecionados);
+
+      // envia mensagem para os jogadores
+      usuarios
+        .filter(u => u.skill === "jogador")
+        .forEach(u => {
+          const action = novosSelecionados.includes(u.nome) ? "unmute" : "mute";
+          const payload = {
+            type: "audio-control",
+            target: u.nome,
+            action,
+            from: meuUsuario.nome // narrador que envia
+          };
+          if (_client._dataStreamId) _client.sendStreamMessage(_client._dataStreamId, JSON.stringify(payload));
+        });
+    }
 
   // 🔹 Agrupa usuários
   const narradores = usuarios.filter((u) => u.skill === "narrador");
