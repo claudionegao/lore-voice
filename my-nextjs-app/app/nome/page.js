@@ -27,7 +27,8 @@ const NomePage = () => {
 
     try {
       const remoteUsers = _client.remoteUsers || [];
-
+      console.log("remoteUsers")
+      console.log(remoteUsers)
       // Cria lista completa com o próprio usuário + remotos
       const listaAtual = [remoteUsers.map((u) => ({
           nome: u.uid.split("@")[0],
@@ -35,7 +36,8 @@ const NomePage = () => {
           id: u._uintid,
         })),
       ];
-
+      console.log("listaAtual")
+      console.log(listaAtual)
       setUsuarios(listaAtual);
 
       // Cria volumes visuais aleatórios (mock)
