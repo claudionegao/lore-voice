@@ -55,7 +55,7 @@ const NomePage = () => {
     const handlePublish = async (user, mediaType) => {
       await _client.subscribe(user, mediaType);
       if (mediaType === "audio") user.audioTrack.play();
-    });
+    };
     const handleJoin = (user) => {
       console.log(`🔵 ${user.uid} entrou`);
       atualizarListaAgora();
