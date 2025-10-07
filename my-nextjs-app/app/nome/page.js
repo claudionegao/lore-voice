@@ -8,12 +8,21 @@ const NomePage = () => {
   const { _client, users } = useContext(UserContext); 
   const router = useRouter();
   const searchParams = useSearchParams();
-  const nome = searchParams.get('nome') || '';
-  const skill = searchParams.get('skill') || 'narrador';
+  const nomeParam = searchParams.get('nome') || '';
+  const skillParam = searchParams.get('skill') || 'narrador';
 
   const [usuarios, setUsuarios] = useState([]);
   const [selecionados, setSelecionados] = useState([]);
   const [volumes, setVolumes] = useState({});
+  const [meuUsuario, setMeuUsuario] = useState({ nome: nomeParam, skill: skillParam });
+
+  // 🔹 Define informações do próprio usuário
+  useEffect(() => {
+    if (users && users.length > 0) {
+      // Define o primeiro como o próprio usuário (sem id do agora)
+      setMeuUsuario(users[0]);
+    }
+  }, [users]);
 
   // 🔹 Verifica conexão
   useEffect(() => {
@@ -22,36 +31,24 @@ const NomePage = () => {
     }
   }, [_client]);
 
-  // 🔹 Buscar usuários do DB inicialmente
-  useEffect(() => {
-    async function fetchUsuarios() {
-      try {
-        const res = await fetch('/api/getUsers');
-        const data = await res.json();
-        setUsuarios(data);
-
-        const vols = Object.fromEntries(data.map(u => [u.nome, Math.floor(Math.random() * 100) + 1]));
-        setVolumes(vols);
-
-      } catch (err) {
-        console.error("Erro ao buscar usuários:", err);
-      }
-    }
-    fetchUsuarios();
-  }, [nome]);
-
-  // 🔹 Atualiza lista local sempre que 'users' do contexto mudar
+  // 🔹 Atualiza lista de usuários sempre que mudar no contexto
   useEffect(() => {
     if (Array.isArray(users)) {
       setUsuarios(users);
+
+      // Gera volumes falsos pra cada usuário (só visual)
+      const vols = Object.fromEntries(users.map(u => [u.nome, Math.floor(Math.random() * 100) + 1]));
+      setVolumes(vols);
     }
   }, [users]);
 
+  // 🔹 Desconectar do canal
   async function handleDesconectar() {
     await _client.leave();
     router.replace("/");
   }
 
+  // 🔹 Selecionar jogadores (apenas narrador)
   function handleCheckbox(usuario) {
     setSelecionados(prev =>
       prev.includes(usuario)
@@ -60,9 +57,11 @@ const NomePage = () => {
     );
   }
 
+  // 🔹 Separar por função
   const narradores = usuarios.filter(u => u.skill === "narrador");
   const jogadores = usuarios.filter(u => u.skill === "jogador");
 
+  // 🔹 Componente de barra de volume
   function VolumeBar({ value }) {
     return (
       <div style={{
@@ -87,6 +86,7 @@ const NomePage = () => {
     );
   }
 
+  // 🔹 Renderiza listas de usuários
   function renderUserList(list) {
     return (
       <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
@@ -95,14 +95,14 @@ const NomePage = () => {
             key={i}
             style={{
               padding: "6px 0",
-              color: u.nome === nome ? "#fff" : "#b3b3cc",
-              fontWeight: u.nome === nome ? 700 : 400,
+              color: u.nome === meuUsuario.nome ? "#fff" : "#b3b3cc",
+              fontWeight: u.nome === meuUsuario.nome ? 700 : 400,
               display: "flex",
               alignItems: "center",
               gap: 8,
             }}
           >
-            {skill === "narrador" && u.nome !== nome && (
+            {meuUsuario.skill === "narrador" && u.nome !== meuUsuario.nome && (
               <input
                 type="checkbox"
                 checked={selecionados.includes(u.nome)}
@@ -111,7 +111,7 @@ const NomePage = () => {
               />
             )}
             {u.nome}
-            {u.nome === nome && (
+            {u.nome === meuUsuario.nome && (
               <span style={{ color: "#6366f1", marginLeft: 6 }}>(você)</span>
             )}
             <VolumeBar value={volumes[u.nome] ?? 0} />
@@ -150,7 +150,7 @@ const NomePage = () => {
           fontWeight: 700,
           margin: 0,
           color: "#6366f1",
-        }}>{nome} ({skill})</h1>
+        }}>{meuUsuario.nome} ({meuUsuario.skill})</h1>
 
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{
