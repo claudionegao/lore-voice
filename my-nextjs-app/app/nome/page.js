@@ -63,6 +63,8 @@ const NomePage = () => {
       atualizarListaAgora();
     };
 
+    _client.enableAudioVolumeIndicator();
+    
     const handleVolume = (volumes) => {
       console.log(volumes)
     };
