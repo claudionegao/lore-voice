@@ -2,13 +2,13 @@
 import React, { useState, useContext, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import UserContext from "../context/UserContext";
+import AgoraRTM from "module";"agora-rtm-sdk"
 
 const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID;
 
 const NameForm = () => {
   const [name, setName] = useState("");
   const [AgoraRTC, setAgoraRTC] = useState(null);
-  const [AgoraRTM, setAgoraRTM] = useState(null);
   const router = useRouter();
   const { _client, _mClient , _setClient, setUsers,_setMclient } = useContext(UserContext);
 
@@ -86,7 +86,6 @@ const NameForm = () => {
 
   // Importa dinamicamente o SDK da Agora
   useEffect(() => {
-    import("agora-rtm-sdk").then((mod) => setAgoraRTM(mod));
     import("agora-rtc-sdk-ng").then((mod) => setAgoraRTC(mod.default));
   }, []);
 
