@@ -63,8 +63,7 @@ const NameForm = () => {
     setUsers(prev => [
       ...prev.filter(u => u.id !== user._uintid), // evita duplicar
       { nome: user.uid.split('@')[0], skill: user.uid.split('@')[1] || 'jogador', id: user._uintid }
-    ]);
-    console.log(users);
+    ]).then(() => console.log(users));
   });
 
   // Usuário publica áudio
@@ -76,8 +75,7 @@ const NameForm = () => {
   // Usuário sai
   _client.on("user-left", async (user) => {
     console.log(`user ${user._uintid} saiu`);
-    setUsers(prev => prev.filter(u => u.id !== user._uintid));
-    console.log(users);
+    setUsers(prev => prev.filter(u => u.id !== user._uintid)).then(() => console.log(users));
   });
 
   if (_client.connectionState === "CONNECTED") {
