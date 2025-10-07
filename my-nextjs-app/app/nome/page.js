@@ -76,6 +76,7 @@ const NomePage = () => {
     });
 
     // Envia notificação para outros usuários via _client
+    console.log(_client)
     _client.sendMessage({
       type: 'papelChanged',
       data: { nome, skill: novoPapel }
