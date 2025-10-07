@@ -46,37 +46,6 @@ const NameForm = () => {
     }
   }
 
-  // 🔹 Lógica do host
-  async function handleUserChange() {
-    const usuariosDB = await buscarUsuariosDB();
-    const hostUser = usuariosDB.find((u) => u.host);
-
-    if (hostUser) {
-      if (hostUser.nome !== name) return;
-      await fetch("/api/updateDB", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nome: name, skill }),
-      });
-      return;
-    }
-
-    const minIdUser = usuariosDB.reduce(
-      (prev, curr) => (!prev || curr.id < prev.id ? curr : prev),
-      null
-    );
-
-    if (!minIdUser) return;
-
-    if (minIdUser.nome === name) {
-      await fetch("/api/updateDB", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nome, makeHost: true, skill }),
-      });
-    }
-  }
-
   // 🔹 Import dinâmico apenas no browser
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -86,31 +55,35 @@ const NameForm = () => {
 
   // 🔹 Eventos de usuário RTC
   useEffect(() => {
-    if (!_client) return;
+  if (!_client) return;
 
-    _client.on("user-joined", async (user) => {
-      console.log(`user ${user.uid} entrou agora: ${user._uintid}`);
-      console.log(user);
-      if (mediaType === "audio") user.audioTrack.play();
-      await handleUserChange();
-    });
+  // Usuário entra
+  _client.on("user-joined", async (user) => {
+    console.log(`user ${user._uintid} entrou`);
+    setUsers(prev => [
+      ...prev.filter(u => u.id !== user._uintid), // evita duplicar
+      { nome: user.uid.split('@')[0], skill: user.uid.split('@')[1] || 'jogador', id: user._uintid }
+    ]);
+  });
 
-    _client.on("user-published", async (user, mediaType) => {
-      await _client.subscribe(user, mediaType);
-      if (mediaType === "audio") user.audioTrack.play();
-      await handleUserChange();
-    });
+  // Usuário publica áudio
+  _client.on("user-published", async (user, mediaType) => {
+    await _client.subscribe(user, mediaType);
+    if (mediaType === "audio") user.audioTrack.play();
+  });
 
-    _client.on("user-left", async (user) => {
-      console.log(`user ${user.uid} saiu`);
-      console.log(user);
-      await handleUserChange();
-    });
+  // Usuário sai
+  _client.on("user-left", async (user) => {
+    console.log(`user ${user._uintid} saiu`);
+    setUsers(prev => prev.filter(u => u.id !== user._uintid));
+  });
 
-    if (_client.connectionState === "CONNECTED") {
-      router.push(`/nome?nome=${encodeURIComponent(name)}&skill=${encodeURIComponent(skill)}`);
-    }
-  }, [_client]);
+  if (_client.connectionState === "CONNECTED") {
+    router.push(
+      `/nome?nome=${encodeURIComponent(name)}&skill=${encodeURIComponent(skill)}`
+    );
+  }
+}, [_client]);
 
   // 🔹 Submissão do formulário
   async function handleSubmit(e) {
@@ -184,10 +157,6 @@ const NameForm = () => {
           Jogador
         </label>
       </div>
-
-      <p style={{ color: "#f87171", fontSize: 12 }}>
-        ⚠️ Mudar o skill exigirá reconexão.
-      </p>
 
       <button
         type="submit"
