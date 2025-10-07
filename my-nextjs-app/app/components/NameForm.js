@@ -10,7 +10,7 @@ const NameForm = () => {
   const [skill, setSkill] = useState("narrador"); // skill selecionada
   const [AgoraRTC, setAgoraRTC] = useState(null);
   const router = useRouter();
-  const { _client, _setClient, setUsers } = useContext(UserContext);
+  const { _client, _setClient,users, setUsers } = useContext(UserContext);
 
   // 🔹 Aguarda conexão RTC
   function waitForConnection(client, timeout = 5000) {
@@ -88,15 +88,17 @@ const NameForm = () => {
   useEffect(() => {
     if (!_client) return;
 
-    _client.on("user-join", async (user, mediaType) => {
+    _client.on("user-joined", async (user, mediaType) => {
       await _client.subscribe(user, mediaType);
       console.log(`user ${user.uid} entrou`);
+      console.log(user);
       if (mediaType === "audio") user.audioTrack.play();
       await handleUserChange();
     });
 
-    _client.on("user-leave", async (user) => {
+    _client.on("user-left", async (user) => {
       console.log(`user ${user.uid} saiu`);
+      console.log(user);
       await handleUserChange();
     });
 
