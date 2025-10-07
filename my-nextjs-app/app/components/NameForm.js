@@ -53,49 +53,27 @@ const NameForm = () => {
     import("agora-rtc-sdk-ng").then((mod) => setAgoraRTC(mod.default));
   }, []);
 
-  // 🔹 Eventos de usuário RTC
-  /*
-useEffect(() => {
-  if (!_client) return;
+  useEffect(() => {
+    if (!_client) return;
 
-  // Usuário entra
-  _client.on("user-joined", async (user) => {
-    console.log(`user ${user.uid.split('@')[0]} entrou`);
-    console.log('remoteusers')
-    console.log(_client.remoteUsers)
-    const novoUsuario = { 
-      nome: user.uid.split('@')[0], 
-      skill: user.uid.split('@')[1] || 'jogador', 
-      id: user._uintid 
-    };
-    const updatedUsers = [...users.filter(u => u.id !== user._uintid), novoUsuario];
-    setUsers(updatedUsers);
-    console.log(updatedUsers);
-  });
+    async function criarDataStream() {
+      try {
+        // O createDataStream retorna um ID
+        const streamId = await _client.createDataStream({
+          reliable: true,   // garante entrega
+          ordered: true     // mantém ordem
+        });
+        _client._dataStreamId = streamId; // armazena para uso posterior
+        console.log("DataStream criado:", streamId);
+      } catch (e) {
+        console.error("Erro ao criar DataStream:", e);
+      }
+    }
 
-  // Usuário publica áudio
-  _client.on("user-published", async (user, mediaType) => {
-    await _client.subscribe(user, mediaType);
-    if (mediaType === "audio") user.audioTrack.play();
-  });
+    criarDataStream();
+  }, [_client]);
 
-  // Usuário sai
-  _client.on("user-left", async (user) => {
-    console.log(`user ${user.uid.split('@')[0]} saiu`);
-    console.log('remoteusers')
-    console.log(_client.remoteUsers)
-    const updatedUsers = users.filter(u => u.id !== user._uintid);
-    setUsers(updatedUsers);
-    console.log(updatedUsers);
-  });
 
-  if (_client.connectionState === "CONNECTED") {
-    router.push(
-      `/nome?nome=${encodeURIComponent(name.split('@')[0])}&skill=${encodeURIComponent(skill)}`
-    );
-  }
-}, [_client, users]);
-*/
   // 🔹 Submissão do formulário
   async function handleSubmit(e) {
     e.preventDefault();

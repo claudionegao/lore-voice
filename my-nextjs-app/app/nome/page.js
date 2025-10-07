@@ -18,7 +18,7 @@ const NomePage = () => {
   const [meuUsuario, setMeuUsuario] = useState({
     nome: nomeParam,
     skill: skillParam,
-    id: "self",
+    id: _client.intUid,
   });
 
   // 🔹 Atualiza lista com base no remoteUsers sempre que mudar
@@ -170,7 +170,7 @@ const NomePage = () => {
         type: "audio-control",
         target: usuario.id,
         action,
-        from: meuUsuario.nome // narrador que envia
+        from: meuUsuario.id // narrador que envia
       };
       console.log(_client._dataStreamId)
       if (_client._dataStreamId) _client.sendStreamMessage(_client._dataStreamId, JSON.stringify(payload));
