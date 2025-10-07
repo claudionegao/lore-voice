@@ -30,12 +30,12 @@ const NomePage = () => {
       console.log("remoteUsers")
       console.log(remoteUsers)
       // Cria lista completa com o próprio usuário + remotos
-      const listaAtual = [remoteUsers.map((u) => ({
+      const listaAtual = remoteUsers.map((u) => ({
           nome: u.uid.split("@")[0],
           skill: u.uid.split("@")[1] || "jogador",
           id: u._uintid,
-        })),
-      ];
+      }));
+
       console.log("listaAtual")
       console.log(listaAtual)
       setUsuarios(listaAtual);
