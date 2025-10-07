@@ -2,17 +2,18 @@
 import React, { useState, useContext, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import UserContext from "../context/UserContext";
-import AgoraRTM from "agora-rtm-sdk"
 
 const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID;
 
 const NameForm = () => {
   const [name, setName] = useState("");
   const [AgoraRTC, setAgoraRTC] = useState(null);
+  const [AgoraRTM, setAgoraRTM] = useState(null);
   const router = useRouter();
-  const { _client, _mClient , _setClient, setUsers,_setMclient } = useContext(UserContext);
+  const { _client, _mClient, _setClient, setUsers, _setMclient } =
+    useContext(UserContext);
 
-  // Função auxiliar — espera até o cliente estar realmente conectado
+  // 🔹 Aguarda conexão RTC
   function waitForConnection(client, timeout = 5000) {
     return new Promise((resolve, reject) => {
       if (client.connectionState === "CONNECTED") return resolve();
@@ -34,7 +35,7 @@ const NameForm = () => {
     });
   }
 
-  // Função para buscar todos os usuários do DB (via rota GET)
+  // 🔹 Busca usuários do DB
   async function buscarUsuariosDB() {
     try {
       const res = await fetch("/api/getUsers");
@@ -46,18 +47,13 @@ const NameForm = () => {
     }
   }
 
-  // Atualiza DB conforme a lógica de host
+  // 🔹 Lógica do host
   async function handleUserChange() {
     const usuariosDB = await buscarUsuariosDB();
-
-    // Verifica se há algum host
     const hostUser = usuariosDB.find((u) => u.host);
 
     if (hostUser) {
-      // Se já existe host e não é você, não faz nada
       if (hostUser.nome !== name) return;
-
-      // Se você é o host, atualiza o DB
       await fetch("/api/updateDB", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -66,7 +62,6 @@ const NameForm = () => {
       return;
     }
 
-    // Se não há host, quem tiver o menor ID se torna host
     const minIdUser = usuariosDB.reduce(
       (prev, curr) => (!prev || curr.id < prev.id ? curr : prev),
       null
@@ -74,7 +69,6 @@ const NameForm = () => {
 
     if (!minIdUser) return;
 
-    // Se o menor ID for o seu, torna-se host e atualiza o DB
     if (minIdUser.nome === name) {
       await fetch("/api/updateDB", {
         method: "POST",
@@ -84,19 +78,34 @@ const NameForm = () => {
     }
   }
 
-  // Importa dinamicamente o SDK da Agora
+  // 🔹 Import dinâmico (só no browser)
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // RTC normal (ESM)
     import("agora-rtc-sdk-ng").then((mod) => setAgoraRTC(mod.default));
+
+    // RTM via script global (evita "window is not defined")
+    const script = document.createElement("script");
+    script.src = "https://download.agora.io/sdk/release/AgoraRTM.min.js";
+    script.async = true;
+    script.onload = () => {
+      setAgoraRTM(window.AgoraRTM);
+      console.log("✅ AgoraRTM carregado via script global");
+    };
+    document.body.appendChild(script);
   }, []);
 
-  // Lida com eventos de entrada e saída de usuários
+  // 🔹 Eventos de usuário
   useEffect(() => {
     if (!_client) return;
 
-    _mClient.on('message', (msg) => {
-      if (msg.type === 'papelChanged') {
-        setUsers(prev =>
-          prev.map(u => u.nome === msg.data.nome ? { ...u, skill: msg.data.skill } : u)
+    _mClient?.on("message", (msg) => {
+      if (msg.type === "papelChanged") {
+        setUsers((prev) =>
+          prev.map((u) =>
+            u.nome === msg.data.nome ? { ...u, skill: msg.data.skill } : u
+          )
         );
       }
     });
@@ -104,58 +113,45 @@ const NameForm = () => {
     _client.on("user-published", async (user, mediaType) => {
       await _client.subscribe(user, mediaType);
       console.log(`user ${user.uid} entrou`);
-      if (mediaType === "audio") {
-        user.audioTrack.play();
-      }
-      await handleUserChange(); // Atualiza DB quando alguém entra
+      if (mediaType === "audio") user.audioTrack.play();
+      await handleUserChange();
     });
 
     _client.on("user-unpublished", async (user) => {
       console.log(`user ${user.uid} saiu`);
-      await handleUserChange(); // Atualiza DB quando alguém sai
+      await handleUserChange();
     });
 
-    if (_client && _client.connectionState === "CONNECTED") {
+    if (_client.connectionState === "CONNECTED") {
       router.push(`/nome?nome=${encodeURIComponent(name)}`);
     }
   }, [_client]);
 
-  // Ação do formulário
+  // 🔹 Submissão
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!AgoraRTC) return;
-    if (!AgoraRTM) return;
-    const rtm = AgoraRTM.createInstance("9b5dc5074e5d4193ad5c4e002fa9270a");
-    await rtm.login({ uid: name });
+    if (!AgoraRTC || !AgoraRTM) return;
 
+    // RTM
+    const rtm = AgoraRTM.createInstance(appId);
+    await rtm.login({ uid: name });
     const Mchannel = await rtm.createChannel("SkillChannel");
     await Mchannel.join();
-    const client = await AgoraRTC.createClient({
-      mode: "rtc",
-      codec: "vp8",
-      logConfig: { level: 0 },
+
+    // RTC
+    const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+    const res = await fetch("/api/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ channel: "LoreVoice", name }),
     });
-    console.log("Client criado:", client);
+    const { token } = await res.json();
 
-    const channel = "LoreVoice";
-    const res = await (
-      await fetch("/api/token", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ channel, name }),
-      })
-    ).json();
-
-    const token = res.token;
-    await client.join(appId, channel, token, name);
-
-    const microphoneTrack = await AgoraRTC.createMicrophoneAudioTrack();
-    await client.publish([microphoneTrack]);
-
-    // Espera garantir que está conectado antes de atualizar o DB
+    await client.join(appId, "LoreVoice", token, name);
+    const micTrack = await AgoraRTC.createMicrophoneAudioTrack();
+    await client.publish([micTrack]);
     await waitForConnection(client);
 
-    // Atualiza o DB inicial
     await fetch("/api/updateDB", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -171,10 +167,7 @@ const NameForm = () => {
       onSubmit={handleSubmit}
       className="flex flex-col items-center gap-4 p-6 bg-white rounded-lg shadow-md max-w-sm mx-auto"
     >
-      <label
-        htmlFor="name"
-        className="text-lg font-semibold text-gray-700"
-      >
+      <label htmlFor="name" className="text-lg font-semibold text-gray-700">
         Qual seu nome?
       </label>
       <input
@@ -189,7 +182,7 @@ const NameForm = () => {
       <button
         type="submit"
         className="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700 transition"
-        disabled={!AgoraRTC}
+        disabled={!AgoraRTC || !AgoraRTM}
       >
         Connect
       </button>
