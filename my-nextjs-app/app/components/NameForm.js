@@ -13,7 +13,7 @@ const NameForm = () => {
   const { _client, _mClient, _setClient, setUsers, _setMclient } =
     useContext(UserContext);
 
-  // 🔹 Espera conexão RTC
+  // 🔹 Aguarda conexão RTC
   function waitForConnection(client, timeout = 5000) {
     return new Promise((resolve, reject) => {
       if (client.connectionState === "CONNECTED") return resolve();
@@ -47,7 +47,7 @@ const NameForm = () => {
     }
   }
 
-  // 🔹 Lógica de host
+  // 🔹 Lógica do host
   async function handleUserChange() {
     const usuariosDB = await buscarUsuariosDB();
     const hostUser = usuariosDB.find((u) => u.host);
@@ -78,40 +78,33 @@ const NameForm = () => {
     }
   }
 
-  // 🔹 Import dinâmico das SDKs (só no browser)
+  // 🔹 Import dinâmico apenas no browser
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // RTC SDK
-    import("agora-rtc-sdk-ng")
-      .then((mod) => setAgoraRTC(mod.default || mod))
-      .catch((err) => console.error("Erro ao carregar AgoraRTC:", err));
+    // RTC ESM
+    import("agora-rtc-sdk-ng").then((mod) => setAgoraRTC(mod.default));
 
-    // RTM SDK
-    import("agora-rtm-sdk")
-      .then((mod) => {
-        const RTM = mod.default?.createInstance ? mod.default : mod;
-        if (!RTM.createInstance) {
-          console.error("❌ RTM SDK inválido:", RTM);
-        } else {
-          setAgoraRTM(RTM);
-          console.log("✅ AgoraRTM carregado corretamente");
-        }
-      })
-      .catch((err) => console.error("Erro ao carregar AgoraRTM:", err));
+    // RTM ESM
+    import("agora-rtm-sdk").then((mod) => setAgoraRTM(mod));
   }, []);
 
-  // 🔹 Eventos de usuários
+  // 🔹 Eventos de usuário RTC
   useEffect(() => {
     if (!_client) return;
 
-    _mClient?.on("message", (msg) => {
-      if (msg.type === "papelChanged") {
-        setUsers((prev) =>
-          prev.map((u) =>
-            u.nome === msg.data.nome ? { ...u, skill: msg.data.skill } : u
-          )
-        );
+    _mClient?.on("MessageFromPeer", (msg, peerId) => {
+      try {
+        const data = JSON.parse(msg.text);
+        if (data.type === "papelChanged") {
+          setUsers((prev) =>
+            prev.map((u) =>
+              u.nome === data.data.nome ? { ...u, skill: data.data.skill } : u
+            )
+          );
+        }
+      } catch (err) {
+        console.error("Erro ao processar mensagem RTM:", err);
       }
     });
 
@@ -132,24 +125,19 @@ const NameForm = () => {
     }
   }, [_client]);
 
-  // 🔹 Submissão
+  // 🔹 Submissão do formulário
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!AgoraRTC || !AgoraRTM) {
-      alert("SDKs ainda carregando...");
-      return;
-    }
+    if (!AgoraRTC || !AgoraRTM) return;
 
     // RTM
-    console.log("➡ Criando instância RTM...");
-    const rtm = AgoraRTM.createInstance(appId, { enableLogUpload: false });
-    await rtm.login({ uid: name });
-
-    const Mchannel = await rtm.createChannel("SkillChannel");
-    await Mchannel.join();
+    const rtmClient = AgoraRTM.createInstance(appId, { enableLogUpload: false });
+    await rtmClient.login({ uid: name });
+    const channel = await rtmClient.createChannel("SkillChannel");
+    await channel.join();
 
     // RTC
-    const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+    const rtcClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
     const res = await fetch("/api/token", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -157,20 +145,19 @@ const NameForm = () => {
     });
     const { token } = await res.json();
 
-    await client.join(appId, "LoreVoice", token, name);
+    await rtcClient.join(appId, "LoreVoice", token, name);
     const micTrack = await AgoraRTC.createMicrophoneAudioTrack();
-    await client.publish([micTrack]);
-    await waitForConnection(client);
+    await rtcClient.publish([micTrack]);
+    await waitForConnection(rtcClient);
 
-    // Atualiza DB
     await fetch("/api/updateDB", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ nome: name }),
     });
 
-    _setClient(client);
-    _setMclient(Mchannel);
+    _setClient(rtcClient);
+    _setMclient(channel);
   }
 
   return (
