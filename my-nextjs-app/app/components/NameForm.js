@@ -54,16 +54,20 @@ const NameForm = () => {
   }, []);
 
   // 🔹 Eventos de usuário RTC
-  useEffect(() => {
+useEffect(() => {
   if (!_client) return;
 
   // Usuário entra
   _client.on("user-joined", async (user) => {
-    console.log(`user ${user._uintid} entrou`);
-    setUsers(prev => [
-      ...prev.filter(u => u.id !== user._uintid), // evita duplicar
-      { nome: user.uid.split('@')[0], skill: user.uid.split('@')[1] || 'jogador', id: user._uintid }
-    ]).then(() => console.log(users));
+    console.log(`user ${user.uid.split('@')[0]} entrou`);
+    const novoUsuario = { 
+      nome: user.uid.split('@')[0], 
+      skill: user.uid.split('@')[1] || 'jogador', 
+      id: user._uintid 
+    };
+    const updatedUsers = [...users.filter(u => u.id !== user._uintid), novoUsuario];
+    setUsers(updatedUsers);
+    console.log(updatedUsers);
   });
 
   // Usuário publica áudio
@@ -74,8 +78,10 @@ const NameForm = () => {
 
   // Usuário sai
   _client.on("user-left", async (user) => {
-    console.log(`user ${user._uintid} saiu`);
-    setUsers(prev => prev.filter(u => u.id !== user._uintid)).then(() => console.log(users));
+    console.log(`user ${user.uid.split('@')[0]} saiu`);
+    const updatedUsers = users.filter(u => u.id !== user._uintid);
+    setUsers(updatedUsers);
+    console.log(updatedUsers);
   });
 
   if (_client.connectionState === "CONNECTED") {
@@ -83,7 +89,7 @@ const NameForm = () => {
       `/nome?nome=${encodeURIComponent(name.split('@')[0])}&skill=${encodeURIComponent(skill)}`
     );
   }
-}, [_client]);
+}, [_client, users]);
 
   // 🔹 Submissão do formulário
   async function handleSubmit(e) {
