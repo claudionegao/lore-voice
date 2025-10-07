@@ -38,7 +38,7 @@ const NameForm = () => {
       .catch((err) => console.error("Erro ao carregar AgoraRTC", err));
 
     import("agora-rtm-sdk")
-      .then((mod) => setAgoraRTM(const RTM = mod.default || mod)
+      .then((mod) => setAgoraRTM(mod.default || mod)
       .catch((err) => console.error("Erro ao carregar AgoraRTM", err));
 
   }, []);
