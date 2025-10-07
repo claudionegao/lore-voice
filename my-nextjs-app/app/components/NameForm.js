@@ -10,19 +10,14 @@ const NameForm = () => {
   const [AgoraRTC, setAgoraRTC] = useState(null);
   const [AgoraRTM, setAgoraRTM] = useState(null);
   const router = useRouter();
-  const { _client, _mClient, _setClient, setUsers, _setMclient } =
+  const { _client, _mClient, _setClient, _setMclient, setUsers } =
     useContext(UserContext);
 
-  // 🔹 Aguarda conexão RTC
+  // 🌀 Espera conexão RTC
   function waitForConnection(client, timeout = 5000) {
     return new Promise((resolve, reject) => {
       if (client.connectionState === "CONNECTED") return resolve();
-
-      const timer = setTimeout(() => {
-        client.off("connection-state-change", onChange);
-        reject(new Error("Tempo esgotado para conectar ao canal"));
-      }, timeout);
-
+      const timer = setTimeout(() => reject(new Error("Timeout ao conectar")), timeout);
       function onChange(state) {
         if (state === "CONNECTED") {
           clearTimeout(timer);
@@ -30,12 +25,37 @@ const NameForm = () => {
           resolve();
         }
       }
-
       client.on("connection-state-change", onChange);
     });
   }
 
-  // 🔹 Busca usuários do DB
+  // 🔹 Carrega SDKs dinamicamente
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    import("agora-rtc-sdk-ng")
+      .then((mod) => setAgoraRTC(mod.default || mod))
+      .catch((err) => console.error("Erro ao carregar AgoraRTC", err));
+
+    import("agora-rtm-sdk")
+      .then((mod) => {
+        // Detecta a forma correta do módulo
+        const RTM = mod.default || mod;
+        if (typeof RTM.createInstance === "function") {
+          setAgoraRTM(() => RTM);
+        } else if (typeof RTM === "function") {
+          // SDK exporta diretamente a classe AgoraRTM
+          setAgoraRTM(() => ({
+            createInstance: (...args) => new RTM(...args),
+          }));
+        } else {
+          console.error("Forma inesperada de exportação do agora-rtm-sdk:", mod);
+        }
+      })
+      .catch((err) => console.error("Erro ao carregar AgoraRTM", err));
+  }, []);
+
+  // 🔹 Busca usuários no DB
   async function buscarUsuariosDB() {
     try {
       const res = await fetch("/api/getUsers");
@@ -47,11 +67,10 @@ const NameForm = () => {
     }
   }
 
-  // 🔹 Lógica do host
+  // 🔹 Atualiza/define host
   async function handleUserChange() {
     const usuariosDB = await buscarUsuariosDB();
     const hostUser = usuariosDB.find((u) => u.host);
-
     if (hostUser) {
       if (hostUser.nome !== name) return;
       await fetch("/api/updateDB", {
@@ -67,9 +86,7 @@ const NameForm = () => {
       null
     );
 
-    if (!minIdUser) return;
-
-    if (minIdUser.nome === name) {
+    if (minIdUser && minIdUser.nome === name) {
       await fetch("/api/updateDB", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -78,22 +95,7 @@ const NameForm = () => {
     }
   }
 
-  // 🔹 Import dinâmico do SDK RTC e RTM (somente client-side)
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    // RTC
-    import("agora-rtc-sdk-ng")
-      .then((mod) => setAgoraRTC(mod.default || mod))
-      .catch((err) => console.error("Erro ao carregar AgoraRTC", err));
-
-    // RTM
-    import("agora-rtm-sdk")
-      .then((mod) => setAgoraRTM(mod.default || mod))
-      .catch((err) => console.error("Erro ao carregar AgoraRTM", err));
-  }, []);
-
-  // 🔹 Eventos de usuário
+  // 🔹 Eventos do cliente
   useEffect(() => {
     if (!_client) return;
 
@@ -124,18 +126,20 @@ const NameForm = () => {
     }
   }, [_client]);
 
-  // 🔹 Submissão do formulário
+  // 🔹 Botão conectar
   async function handleSubmit(e) {
     e.preventDefault();
     if (!AgoraRTC || !AgoraRTM) return;
 
-    // RTM
+    console.log("🔹 Iniciando conexão RTM e RTC...");
+
+    // --- RTM ---
     const rtm = AgoraRTM.createInstance(appId);
     await rtm.login({ uid: name });
     const Mchannel = await rtm.createChannel("SkillChannel");
     await Mchannel.join();
 
-    // RTC
+    // --- RTC ---
     const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
     const res = await fetch("/api/token", {
       method: "POST",
@@ -149,7 +153,7 @@ const NameForm = () => {
     await client.publish([micTrack]);
     await waitForConnection(client);
 
-    // Atualiza DB inicial
+    // Atualiza BD
     await fetch("/api/updateDB", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
