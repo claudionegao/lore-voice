@@ -164,7 +164,7 @@ const NomePage = () => {
       setSelecionados(novosSelecionados);
       console.log(selecionados)
       // envia mensagem para os jogadores
-      const action = novosSelecionados.includes(u.nome) ? "unmute" : "mute";
+      const action = novosSelecionados.includes(usuario.nome) ? "unmute" : "mute";
       const payload = {
         type: "audio-control",
         target: usuario.nome,
