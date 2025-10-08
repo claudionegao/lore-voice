@@ -3,6 +3,7 @@
 import React, { Suspense, useContext, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import UserContext from "../context/UserContext";
+import { sendChannelMessage } from "../lib/agoraRtmClient"; 
 
 const NomePage = () => {
   const { _client } = useContext(UserContext);
@@ -127,6 +128,13 @@ const NomePage = () => {
       _client.off("user-published",handlePublish)
       _client.off("user-joined", handleJoin);
       _client.off("user-left", handleLeave);
+
+      //configuração rtm
+      createRtmClient(APP_ID, uid, channel, rtmToken).then(() => {
+        onChannelMessage((msg, from) => {
+          console.log("Mensagem recebida:", msg, "de", from);
+        });
+      });
     };
   }, [_client]);
 
@@ -164,13 +172,11 @@ const NomePage = () => {
       // atualiza o estado
       setSelecionados(novosSelecionados);
       console.log(_client)
-      _client.sendCustomReportMessage({
-        reportId: "id1", category: "category1", event: "custom", label: "label1", value: 0,
-      }).then(() => {
-        console.log("send custom report success");
-      }).catch(e => {
-        console.error("send custom report error");
-      });
+
+      //RTM
+      sendChannelMessage(`test para ${usuario.nome}`)
+
+
       // envia mensagem para os jogadores
       const action = novosSelecionados.includes(usuario.nome) ? "unmute" : "mute";
       const payload = {

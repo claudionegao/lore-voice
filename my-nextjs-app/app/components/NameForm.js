@@ -2,15 +2,19 @@
 import React, { useState, useContext, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import UserContext from "../context/UserContext";
+import { RtmTokenBuilder, RtmRole } from "agora-access-token";
+import { createRtmClient, onChannelMessage } from "../lib/agoraRtmClient"; 
+
 
 const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID;
+const appCertificate = process.env.NEXT_PUBLIC_AGORA_APP_CERTIFICATE;
 
 const NameForm = () => {
   const [name, setName] = useState("");
   const [skill, setSkill] = useState("narrador"); // skill selecionada
   const [AgoraRTC, setAgoraRTC] = useState(null);
   const router = useRouter();
-  const { _client, _setClient,users, setUsers } = useContext(UserContext);
+  const { _client, _setClient,users, setUsers,_mClient,_setMclient } = useContext(UserContext);
 
   
   // 🔹 Aguarda conexão RTC
@@ -53,6 +57,14 @@ const NameForm = () => {
     
     import("agora-rtc-sdk-ng").then((mod) => setAgoraRTC(mod.default));
   }, []);
+  useEffect(()=>{
+    if (!_mClient) return;
+    onChannelMessage((msg, from) => {
+      console.log("Mensagem recebida:", msg, "de", from);
+    });
+
+
+  },[_mClient]);
   
   // 🔹 Submissão do formulário
   async function handleSubmit(e) {
@@ -69,10 +81,17 @@ const NameForm = () => {
     });
     const { token } = await res.json();
     
+    //RTC
     await rtcClient.join(appId, "LoreVoice", token, name+'@'+skill);
     const micTrack = await AgoraRTC.createMicrophoneAudioTrack();
     await rtcClient.publish([micTrack]);
     await waitForConnection(rtcClient);
+
+    //RTM
+    const rtmToken = RtmTokenBuilder.buildToken(appId, appCertificate, name+'@'+skill, RtmRole.Rtm_User, 3600);
+    const mclient = await createRtmClient(appId, name+'@'+skill, "LoreVoice", rtmToken)
+    _setMclient(mclient)
+
     
     await fetch("/api/updateDB", {
       method: "POST",
