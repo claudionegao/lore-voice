@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import * as AgoraRTM from "agora-rtm-sdk";
 
-let AgoraRTM = null;
 let rtmClient = null;
 let rtmChannel = null;
 
