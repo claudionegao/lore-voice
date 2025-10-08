@@ -3,7 +3,7 @@ import React, { useState, useContext, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import UserContext from "../context/UserContext";
 import { RtmTokenBuilder, RtmRole } from "agora-access-token";
-import { createRtmClient, onChannelMessage } from "../lib/agoraRtmClient"; 
+import { createRtmClient, onChannelMessage } from "../../lib/agoraRtmClient"; 
 
 
 const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID;
