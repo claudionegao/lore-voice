@@ -14,20 +14,30 @@ async function loadRTMLibrary() {
 }
 
 export async function createRtmClient(appId, uid, channel, token = null) {
-  const RTM = await loadRTMLibrary();
-  if (!RTM) throw new Error("RTM SDK não carregado corretamente");
+    const {RTM} = await loadRTMLibrary();
+    if (!RTM) throw new Error("RTM SDK não carregado corretamente");
 
-  if (rtmClient) return { rtmClient, rtmChannel };
+    try {
+    const rtm = new RTM(appId, uid);
+    } catch (status) {
+    console.log("Error");
+    console.log(status);
+    }
+    try {
+    const result = await rtm.login({ token: token });
+    console.log(result);
+    } catch (status) {
+    console.log(status);
+    }
+    try {
+    const result = await rtm.subscribe(channel);
+    console.log(result);
+    } catch (status) {
+    console.log(status);
+    }
 
-  rtmClient = RTM.createInstance(appId);
-
-  await rtmClient.login({ uid, token });
-
-  rtmChannel = rtmClient.createChannel(channel);
-  await rtmChannel.join();
-
-  console.log(`[RTM] conectado no canal ${channel} como ${uid}`);
-  return { rtmClient, rtmChannel };
+    console.log(`[RTM] conectado no canal ${channel} como ${uid}`);
+    return { rtm };
 }
 
 export function getRtmClient() {
