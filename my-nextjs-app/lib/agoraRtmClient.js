@@ -9,7 +9,7 @@ async function loadRTMLibrary() {
     if (typeof window === "undefined") return null; // Evita SSR
 
     const mod = await import("agora-rtm-sdk");
-    AgoraRTM = mod.default || mod;
+    AgoraRTM = mod.AgoraRTM;
     return AgoraRTM;
 }
 
