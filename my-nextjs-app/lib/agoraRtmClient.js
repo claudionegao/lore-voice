@@ -1,7 +1,15 @@
-import AgoraRTM from "agora-rtm-sdk";
-
 let rtmClient = null;
 let rtmChannel = null;
+
+
+const [AgoraRTM, setAgoraRTM] = useState(null);
+
+useEffect(() => {
+if (typeof window === "undefined") return;
+
+import("agora-rtm-sdk").then((mod) => setAgoraRTM(mod.default || mod));
+}, []);
+
 
 export async function createRtmClient(appId, uid, channel, token = null) {
   if (rtmClient) return { rtmClient, rtmChannel };
