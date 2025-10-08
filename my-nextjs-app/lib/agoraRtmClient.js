@@ -15,7 +15,8 @@ async function loadRTMLibrary() {
 
 
 export async function createRtmClient(appId, uid, channel, token = null) {
-  await loadRTMLibrary()  
+  const RTM = await loadRTMLibrary();
+  if (!RTM) throw new Error("RTM SDK não carregado corretamente");
   if (rtmClient) return { rtmClient, rtmChannel };
 
   rtmClient = AgoraRTM.createInstance(appId);
