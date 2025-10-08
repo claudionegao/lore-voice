@@ -30,12 +30,10 @@ export async function createRtmClient(appId, uid, channel, token = null) {
 }
 
 export function getRtmClient() {
-  await loadRTMLibrary()  
   return rtmClient;
 }
 
 export function getRtmChannel() {
-  await loadRTMLibrary()  
   return rtmChannel;
 }
 
@@ -46,7 +44,6 @@ export async function sendChannelMessage(message) {
 }
 
 export function onChannelMessage(callback) {
-  await loadRTMLibrary()  
   if (!rtmChannel) return console.warn("Canal RTM não inicializado");
   rtmChannel.on("ChannelMessage", (msg, memberId) => {
     try {
