@@ -85,7 +85,7 @@ const NameForm = () => {
   }
   async function criarDataStream(DSclient) {
     try {
-      console.log(AgoraRTC)
+      console.log(DSclient)
       const [dataTrack] = await DSclient.createDataStream({ reliable: true, ordered: true });
       await DSclient.publish(dataTrack);
       DSclient._dataTrack = dataTrack;
