@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import * as AgoraRTM from "agora-rtm-sdk";
 
 let AgoraRTM = null;
 let rtmClient = null;
@@ -15,8 +16,9 @@ async function loadRTMLibrary() {
 
 
 export async function createRtmClient(appId, uid, channel, token = null) {
-  const RTM = await loadRTMLibrary();
-  if (!RTM) throw new Error("RTM SDK não carregado corretamente");
+  //const RTM = await loadRTMLibrary();
+  //console.log(RTM);
+  //if (!RTM) throw new Error("RTM SDK não carregado corretamente");
   if (rtmClient) return { rtmClient, rtmChannel };
 
   rtmClient = AgoraRTM.createInstance(appId);
@@ -39,7 +41,7 @@ export function getRtmChannel() {
 }
 
 export async function sendChannelMessage(message) {
-  await loadRTMLibrary()  
+  //await loadRTMLibrary()  
   if (!rtmChannel) return console.warn("Canal RTM não inicializado");
   await rtmChannel.sendMessage({ text: JSON.stringify(message) });
 }
