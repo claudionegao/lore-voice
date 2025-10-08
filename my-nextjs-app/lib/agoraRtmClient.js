@@ -1,26 +1,25 @@
 import { useState, useEffect } from "react";
-import * as AgoraRTM from "agora-rtm-sdk";
 
+let AgoraRTM = null;
 let rtmClient = null;
 let rtmChannel = null;
 
 async function loadRTMLibrary() {
-    if (AgoraRTM) return AgoraRTM;
-    if (typeof window === "undefined") return null; // Evita SSR
+  if (AgoraRTM) return AgoraRTM;
+  if (typeof window === "undefined") return null; // evita SSR
 
-    const mod = await import("agora-rtm-sdk");
-    AgoraRTM = mod.AgoraRTM;
-    return AgoraRTM;
+  const mod = await import("agora-rtm-sdk");
+  AgoraRTM = mod.default || mod; // alguns bundlers usam default
+  return AgoraRTM;
 }
 
-
 export async function createRtmClient(appId, uid, channel, token = null) {
-  //const RTM = await loadRTMLibrary();
-  //console.log(RTM);
-  //if (!RTM) throw new Error("RTM SDK não carregado corretamente");
+  const RTM = await loadRTMLibrary();
+  if (!RTM) throw new Error("RTM SDK não carregado corretamente");
+
   if (rtmClient) return { rtmClient, rtmChannel };
 
-  rtmClient = AgoraRTM.createInstance(appId);
+  rtmClient = RTM.createInstance(appId);
 
   await rtmClient.login({ uid, token });
 
