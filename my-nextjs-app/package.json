@@ -15,7 +15,6 @@
     "@vercel/postgres": "^0.10.0",
     "agora-access-token": "^2.0.4",
     "agora-rtc-sdk-ng": "^4.10.0",
-    "agora-rtm-sdk": "^2.2.2",
     "next": "latest",
     "react": "latest",
     "react-dom": "latest"

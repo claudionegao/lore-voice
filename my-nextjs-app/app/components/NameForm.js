@@ -12,6 +12,17 @@ const NameForm = () => {
   const router = useRouter();
   const { _client, _setClient,users, setUsers } = useContext(UserContext);
 
+  async function criarDataStream(DSclient) {
+    try {
+      const [dataTrack] = await AgoraRTC.createDataStream({ reliable: true, ordered: true });
+      await DSclient.publish(dataTrack);
+      DSclient._dataTrack = dataTrack;
+      console.log("DataStream criado:", streamId);
+    } catch (e) {
+      console.error("Erro ao criar DataStream:", e);
+    }
+  }
+
   // 🔹 Aguarda conexão RTC
   function waitForConnection(client, timeout = 5000) {
     return new Promise((resolve, reject) => {
@@ -53,24 +64,6 @@ const NameForm = () => {
     import("agora-rtc-sdk-ng").then((mod) => setAgoraRTC(mod.default));
   }, []);
 
-  useEffect(() => {
-    if (!_client) return;
-
-    async function criarDataStream() {
-      try {
-        const [dataTrack] = await AgoraRTC.createDataStream({ reliable: true, ordered: true });
-        await _client.publish(dataTrack);
-        _client._dataTrack = dataTrack;
-        console.log("DataStream criado:", streamId);
-      } catch (e) {
-        console.error("Erro ao criar DataStream:", e);
-      }
-    }
-
-    criarDataStream();
-  }, [_client]);
-
-
   // 🔹 Submissão do formulário
   async function handleSubmit(e) {
     e.preventDefault();
@@ -97,6 +90,7 @@ const NameForm = () => {
     });
 
     _setClient(rtcClient);
+    criarDataStream(rtcClient)
     router.push(`/nome?nome=${encodeURIComponent(name)}&skill=${encodeURIComponent(skill)}`);
   }
 
