@@ -80,15 +80,15 @@ const NameForm = () => {
     });
     
     _setClient(rtcClient);
-    await criarDataStream(rtcClient)
+    await criarDataStream()
     router.push(`/nome?nome=${encodeURIComponent(name)}&skill=${encodeURIComponent(skill)}`);
   }
-  async function criarDataStream(DSclient) {
+  async function criarDataStream() {
     try {
       console.log(AgoraRTC)
-      const [dataTrack] = await AgoraRTC.createDataStream({ reliable: true, ordered: true });
-      await DSclient.publish(dataTrack);
-      DSclient._dataTrack = dataTrack;
+      const [dataTrack] = await _client.createDataStream({ reliable: true, ordered: true });
+      await _client.publish(dataTrack);
+      _client._dataTrack = dataTrack;
       console.log("DataStream criado:", streamId);
     } catch (e) {
       console.error("Erro ao criar DataStream:", e);
