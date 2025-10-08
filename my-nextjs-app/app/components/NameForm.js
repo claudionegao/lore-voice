@@ -80,6 +80,8 @@ const NameForm = () => {
       body: JSON.stringify({ channel: "LoreVoice", name }),
     });
     const { token } = await res.json();
+    console.log("------------------------------------token------------------------------------");
+    console.log(token);
     
     //RTC
     await rtcClient.join(appId, "LoreVoice", token, name+'@'+skill);
@@ -89,6 +91,8 @@ const NameForm = () => {
 
     //RTM
     const rtmToken = RtmTokenBuilder.buildToken(appId, appCertificate, name+'@'+skill, RtmRole.Rtm_User, 3600);
+    console.log("------------------------------------rtmToken------------------------------------")
+    console.log(rtmToken)
     const mclient = await createRtmClient(appId, name+'@'+skill, "LoreVoice", rtmToken)
     _setMclient(mclient)
 

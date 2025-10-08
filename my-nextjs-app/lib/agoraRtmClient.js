@@ -5,12 +5,12 @@ let rtmClient = null;
 let rtmChannel = null;
 
 async function loadRTMLibrary() {
-  if (AgoraRTM) return AgoraRTM;
-  if (typeof window === "undefined") return null; // Evita SSR
+    if (AgoraRTM) return AgoraRTM;
+    if (typeof window === "undefined") return null; // Evita SSR
 
-  const mod = await import("agora-rtm-sdk");
-  AgoraRTM = mod.default || mod;
-  return AgoraRTM;
+    const mod = await import("agora-rtm-sdk");
+    AgoraRTM = mod.default || mod;
+    return AgoraRTM;
 }
 
 
