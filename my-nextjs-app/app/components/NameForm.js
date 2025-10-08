@@ -12,17 +12,7 @@ const NameForm = () => {
   const router = useRouter();
   const { _client, _setClient,users, setUsers } = useContext(UserContext);
 
-  async function criarDataStream(DSclient) {
-    try {
-      const [dataTrack] = await AgoraRTC.createDataStream({ reliable: true, ordered: true });
-      await DSclient.publish(dataTrack);
-      DSclient._dataTrack = dataTrack;
-      console.log("DataStream criado:", streamId);
-    } catch (e) {
-      console.error("Erro ao criar DataStream:", e);
-    }
-  }
-
+  
   // 🔹 Aguarda conexão RTC
   function waitForConnection(client, timeout = 5000) {
     return new Promise((resolve, reject) => {
@@ -32,7 +22,7 @@ const NameForm = () => {
         client.off("connection-state-change", onChange);
         reject(new Error("Tempo esgotado para conectar ao canal"));
       }, timeout);
-
+      
       function onChange(state) {
         if (state === "CONNECTED") {
           clearTimeout(timer);
@@ -40,11 +30,11 @@ const NameForm = () => {
           resolve();
         }
       }
-
+      
       client.on("connection-state-change", onChange);
     });
   }
-
+  
   // 🔹 Busca usuários do DB
   async function buscarUsuariosDB() {
     try {
@@ -56,48 +46,59 @@ const NameForm = () => {
       return [];
     }
   }
-
+  
   // 🔹 Import dinâmico apenas no browser
   useEffect(() => {
     if (typeof window === "undefined") return;
-
+    
     import("agora-rtc-sdk-ng").then((mod) => setAgoraRTC(mod.default));
   }, []);
-
+  
   // 🔹 Submissão do formulário
   async function handleSubmit(e) {
     e.preventDefault();
     if (!AgoraRTC) return;
-
+    
     const rtcClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
-
+    
     const res = await fetch("/api/token", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ channel: "LoreVoice", name }),
     });
     const { token } = await res.json();
-
+    
     await rtcClient.join(appId, "LoreVoice", token, name+'@'+skill);
     const micTrack = await AgoraRTC.createMicrophoneAudioTrack();
     await rtcClient.publish([micTrack]);
     await waitForConnection(rtcClient);
-
+    
     await fetch("/api/updateDB", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ nome: name, skill }),
     });
-
+    
     _setClient(rtcClient);
-    criarDataStream(rtcClient)
+    await criarDataStream(rtcClient)
     router.push(`/nome?nome=${encodeURIComponent(name)}&skill=${encodeURIComponent(skill)}`);
   }
-
+  async function criarDataStream(DSclient) {
+    try {
+      const [dataTrack] = await AgoraRTC.createDataStream({ reliable: true, ordered: true });
+      console.log(AgoraRTC)
+      await DSclient.publish(dataTrack);
+      DSclient._dataTrack = dataTrack;
+      console.log("DataStream criado:", streamId);
+    } catch (e) {
+      console.error("Erro ao criar DataStream:", e);
+    }
+  }
+  
   return (
     <form
-      onSubmit={handleSubmit}
-      className="flex flex-col items-center gap-4 p-6 bg-white rounded-lg shadow-md max-w-sm mx-auto"
+    onSubmit={handleSubmit}
+    className="flex flex-col items-center gap-4 p-6 bg-white rounded-lg shadow-md max-w-sm mx-auto"
     >
       <label htmlFor="name" className="text-lg font-semibold text-gray-700">
         Qual seu nome?
