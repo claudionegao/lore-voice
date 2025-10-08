@@ -1,5 +1,3 @@
-import { useState, useEffect } from "react";
-
 let AgoraRTM = null;
 let rtmClient = null;
 let rtmChannel = null;
@@ -19,25 +17,20 @@ export async function createRtmClient(appId, uid, channel, token = null) {
 
     try {
     const rtm = new RTM(appId, uid);
+    const resultlogin = await rtm.login({ token: token });
+    console.log("resultlogin");
+    console.log(resultlogin);
+    const resultsubscribe = await rtm.subscribe(channel);
+    console.log("resultsubscribe");
+    console.log(resultsubscribe);
+
+    console.log(`[RTM] conectado no canal ${channel} como ${uid}`);
+    return { rtm };
     } catch (status) {
     console.log("Error");
     console.log(status);
     }
-    try {
-    const result = await rtm.login({ token: token });
-    console.log(result);
-    } catch (status) {
-    console.log(status);
-    }
-    try {
-    const result = await rtm.subscribe(channel);
-    console.log(result);
-    } catch (status) {
-    console.log(status);
-    }
 
-    console.log(`[RTM] conectado no canal ${channel} como ${uid}`);
-    return { rtm };
 }
 
 export function getRtmClient() {
