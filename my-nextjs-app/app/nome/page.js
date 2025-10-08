@@ -164,6 +164,13 @@ const NomePage = () => {
       // atualiza o estado
       setSelecionados(novosSelecionados);
       console.log(_client)
+      _client.sendCustomReportMessage({
+        reportId: "id1", category: "category1", event: "custom", label: "label1", value: 0,
+      }).then(() => {
+        console.log("send custom report success");
+      }).catch(e => {
+        console.error("send custom report error");
+      });
       // envia mensagem para os jogadores
       const action = novosSelecionados.includes(usuario.nome) ? "unmute" : "mute";
       const payload = {

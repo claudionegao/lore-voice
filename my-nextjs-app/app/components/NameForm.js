@@ -61,6 +61,7 @@ const NameForm = () => {
     
     const rtcClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
     
+    
     const res = await fetch("/api/token", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
