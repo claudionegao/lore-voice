@@ -159,7 +159,7 @@ const NomePage = () => {
 
       const sendMessage = async () => {
         try {
-          const res = await fetch("/api/publish", {
+          const res = await fetch("/api/publishUpstash", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
