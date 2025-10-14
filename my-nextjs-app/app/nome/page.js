@@ -109,15 +109,17 @@ const NomePage = () => {
       const data = JSON.parse(event.data);
 
       // Envia um "ping" de resposta
-      console.log(data)
-      /*await fetch("/api/publishUpstash", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          channel: "server", // ou outro canal que quiser
-          message: "Received"
-        }),
-      });*/
+      if(data.message !== "Received"){
+        console.log("okay")
+        /*await fetch("/api/publishUpstash", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            channel: "server", // ou outro canal que quiser
+            message: "Received"
+          }),
+        });*/
+      }
     };
     eventSource.onerror = (err) => {
       console.error("❌ Erro na conexão SSE:", err);
