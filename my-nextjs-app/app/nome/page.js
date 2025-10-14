@@ -19,7 +19,7 @@ const NomePage = () => {
   const [meuUsuario, setMeuUsuario] = useState({
     nome: nomeParam,
     skill: skillParam,
-    id: _client.intUid,
+    id: _client._joinInfo.uid,
   });
 
   // 🔹 Atualiza lista com base no remoteUsers sempre que mudar
@@ -43,10 +43,7 @@ const NomePage = () => {
   // 🔹 Inicializa listeners de eventos do Agora
   useEffect(() => {
     if (!_client) return;
-    console.log("_client._joinInfo.uid ",_client._joinInfo.uid)
-    console.log("_client.intUid ", _client.intUid)
-    console.log(_client)
-    const eventSource = new EventSource(`/api/subscribeUpstash?channel=${meuUsuario.id}`);
+    const eventSource = new EventSource(`/api/subscribeUpstash?channel=${_client._joinInfo.uid}`);
     console.log(eventSource)
     eventSource.onmessage = async (event) => {
       const data = JSON.parse(event.data);
