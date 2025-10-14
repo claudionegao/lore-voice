@@ -70,8 +70,6 @@ const NomePage = () => {
       eventSource.close();
     };
 
-    return () => eventSource.close();
-
     const handlePublish = async (user, mediaType) => {
       await _client.subscribe(user, mediaType);
       const skill = typeof user.uid === "string" ? user.uid.split("@")[1] : "jogador";
