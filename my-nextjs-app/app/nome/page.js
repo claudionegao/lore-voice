@@ -110,15 +110,14 @@ const NomePage = () => {
 
       // Envia um "ping" de resposta
       if(data.message !== "Received"){
-        console.log("okay")
-        /*await fetch("/api/publishUpstash", {
+        await fetch("/api/publishUpstash", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             channel: "server", // ou outro canal que quiser
             message: "Received"
           }),
-        });*/
+        });
       }
     };
     eventSource.onerror = (err) => {
