@@ -43,7 +43,8 @@ const NomePage = () => {
   // 🔹 Inicializa listeners de eventos do Agora
   useEffect(() => {
     if (!_client) return;
-
+    console.log("_client._intUid ",_client._intUid)
+    console.log("_client.intUid ", _client.intUid)
     const eventSource = new EventSource(`/api/subscribeUpstash?channel=${_client.intUid}`);
     console.log(eventSource)
     eventSource.onmessage = async (event) => {
