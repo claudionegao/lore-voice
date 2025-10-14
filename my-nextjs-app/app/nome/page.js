@@ -105,24 +105,17 @@ const NomePage = () => {
     _client.on("user-left", handleLeave);
 
     const eventSource = new EventSource(`/api/subscribeUpstash?channel=${_client._joinInfo.uid}`);
-    console.log("eventSource")
-    console.log(eventSource)
     eventSource.onmessage = async (event) => {
-      console.log("carregando mensagem")
       const data = JSON.parse(event.data);
-      console.log("📩 Mensagem recebida:", data);
 
       // Envia um "ping" de resposta
+      console.log(data)
       /*await fetch("/api/publishUpstash", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           channel: "server", // ou outro canal que quiser
-          message: {
-            from: _client.intUid,
-            type: "ping",
-            original: data
-          }
+          message: "Received"
         }),
       });*/
     };
@@ -195,9 +188,7 @@ const NomePage = () => {
             body: JSON.stringify({
               channel: usuario.id,
               message: {
-                to: usuario.nome,
                 from: meuUsuario.id,
-                text:`Olá do front-end para ${usuario.nome}!`,
                 mute: tipo
               }
             }),
