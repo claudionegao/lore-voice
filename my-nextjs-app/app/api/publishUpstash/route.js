@@ -1,17 +1,28 @@
-// app/api/publishUpstash/route.js
+import { NextResponse } from "next/server";
+
 export async function POST(req) {
-  const { channel, message } = await req.json();
+  try {
+    const { channel, message } = await req.json();
 
-  const res = await fetch(`https://qstash.upstash.io/v1/publish/${channel}`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(message),
-  });
+    if (!channel || !message) {
+      return NextResponse.json({ error: "É necessário informar 'channel' e 'message'" }, { status: 400 });
+    }
 
-  return new Response(JSON.stringify({ ok: res.ok }), {
-    headers: { "Content-Type": "application/json" },
-  });
+    // Endpoint Pub/Sub do Upstash
+    const res = await fetch(`https://qstash.upstash.io/v1/publish/${channel}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(message),
+    });
+
+    const data = await res.json();
+
+    return NextResponse.json({ ok: true, result: data });
+  } catch (err) {
+    console.error("Erro ao publicar no Upstash:", err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
 }
