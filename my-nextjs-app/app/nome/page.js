@@ -44,6 +44,34 @@ const NomePage = () => {
   useEffect(() => {
     if (!_client) return;
 
+    const eventSource = new EventSource(`/api/subscribeUpstash?channel=${_client.intUid}`);
+    console.log(eventSource)
+    eventSource.onmessage = async (event) => {
+      const data = JSON.parse(event.data);
+      console.log("📩 Mensagem recebida:", data);
+
+      // Envia um "ping" de resposta
+      /*await fetch("/api/publishUpstash", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          channel: "server", // ou outro canal que quiser
+          message: {
+            from: _client.intUid,
+            type: "ping",
+            original: data
+          }
+        }),
+      });*/
+    };
+
+    eventSource.onerror = (err) => {
+      console.error("❌ Erro na conexão SSE:", err);
+      eventSource.close();
+    };
+
+    return () => eventSource.close();
+
     const handlePublish = async (user, mediaType) => {
       await _client.subscribe(user, mediaType);
       const skill = typeof user.uid === "string" ? user.uid.split("@")[1] : "jogador";
@@ -127,34 +155,6 @@ const NomePage = () => {
     if (!_client || _client.connectionState !== "CONNECTED") {
       router.replace("/");
     }
-    const eventSource = new EventSource(`/api/subscribeUpstash?channel=${_client.intUid}`);
-
-    eventSource.onmessage = async (event) => {
-        const data = JSON.parse(event.data);
-        console.log("📩 Mensagem recebida:", data);
-
-        // Envia um "ping" de resposta
-        await fetch("/api/publishUpstash", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            channel: "server", // ou outro canal que quiser
-            message: {
-              from: _client.intUid,
-              type: "ping",
-              original: data
-            }
-          }),
-        });
-      };
-
-      eventSource.onerror = (err) => {
-        console.error("❌ Erro na conexão SSE:", err);
-        eventSource.close();
-      };
-
-      return () => eventSource.close();
-
   }, [_client]);
 
   // 🔹 Desconectar
