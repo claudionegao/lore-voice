@@ -19,7 +19,8 @@ const NomePage = () => {
   const [meuUsuario, setMeuUsuario] = useState({
     nome: nomeParam,
     skill: skillParam,
-    id: _client._joinInfo.uid,
+    id: _client._joinInfo.uid,,
+    vol:true
   });
 
   // 🔹 Atualiza lista com base no remoteUsers sempre que mudar
@@ -33,6 +34,7 @@ const NomePage = () => {
           nome: u.uid.split("@")[0],
           skill: u.uid.split("@")[1] || "jogador",
           id: u._uintid,
+          vol:( (u.uid.split("@")[1] || "jogador") === "jogador" ) ? true : false
       }));
       setUsuarios(listaAtual);
     } catch (err) {
@@ -125,6 +127,19 @@ const NomePage = () => {
           // Toca novamente
           user.audioTrack.play();
         }
+        // 🔹 Atualiza a lista de usuários para refletir o vol
+        const listaAtual = _client.remoteUsers.map((u) => {
+          const skill = u.uid.split("@")[1] || "jogador";
+          return {
+            nome: u.uid.split("@")[0],
+            skill,
+            id: u._uintid,
+            // mostra volume se for jogador OU se for narrador e não estiver mutado
+            vol: skill === "jogador" || (skill === "narrador" && u.uid.toString() === targetUid.toString() && !shouldMute)
+          };
+        });
+
+        setUsuarios(listaAtual);
       }
     };
     eventSource.onerror = (err) => {
@@ -217,7 +232,7 @@ const NomePage = () => {
   const jogadores = usuarios.filter((u) => u.skill === "jogador");
 
   // 🔹 Barra de volume fake (só visual)
-  function VolumeBar({ value }) {
+  function VolumeBar({ value,vol }) {
     return (
       <div
         style={{
@@ -229,7 +244,7 @@ const NomePage = () => {
           border: "1px solid #282846",
           marginLeft: 8,
           marginRight: 4,
-          display: "flex",
+          display: vol ? "flex" : "none",
           alignItems: "center",
         }}
       >
@@ -278,7 +293,7 @@ const NomePage = () => {
             {u.nome === meuUsuario.nome && (
               <span style={{ color: "#6366f1", marginLeft: 6 }}>(você)</span>
             )}
-            <VolumeBar value={volumes[u.nome] ?? 0} />
+            <VolumeBar value={volumes[u.nome] ?? 0} vol={u.vol} />
           </li>
         ))}
       </ul>
