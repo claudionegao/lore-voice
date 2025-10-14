@@ -51,7 +51,7 @@ const NomePage = () => {
       console.log("📩 Mensagem recebida:", data);
 
       // Envia um "ping" de resposta
-      /*await fetch("/api/publishUpstash", {
+      await fetch("/api/publishUpstash", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -62,7 +62,7 @@ const NomePage = () => {
             original: data
           }
         }),
-      });*/
+      });
     };
 
     eventSource.onerror = (err) => {

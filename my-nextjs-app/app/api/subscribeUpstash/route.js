@@ -1,41 +1,31 @@
+// app/api/subscribeUpstash/route.js
 import { Redis } from "@upstash/redis";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN
+  token: process.env.UPSTASH_REDIS_REST_TOKEN,
 });
 
-// Essa rota vai manter a conexão aberta e enviar dados em tempo real
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const channel = searchParams.get("channel");
+  if (!channel) return new Response("Missing channel", { status: 400 });
 
-  if (!channel) {
-    return new Response("Missing channel", { status: 400 });
-  }
+  // 👉 Em vez de redis.subscribe(), usamos o endpoint SSE do Upstash Pub/Sub:
+  const response = await fetch(
+    `https://qstash.upstash.io/v1/stream/${channel}`,
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`,
+      },
+    }
+  );
 
-  const stream = new ReadableStream({
-    start(controller) {
-      const listener = async (message) => {
-        controller.enqueue(`data: ${JSON.stringify(message)}\n\n`);
-      };
-
-      // Escuta o canal do usuário
-      redis.subscribe(channel, listener);
-
-      // Fecha a conexão quando o cliente desconecta
-      req.signal.addEventListener("abort", () => {
-        redis.unsubscribe(channel, listener);
-        controller.close();
-      });
-    },
-  });
-
-  return new Response(stream, {
+  return new Response(response.body, {
     headers: {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
-      "Connection": "keep-alive",
+      Connection: "keep-alive",
     },
   });
 }
