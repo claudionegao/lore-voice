@@ -43,28 +43,6 @@ const NomePage = () => {
   // 🔹 Inicializa listeners de eventos do Agora
   useEffect(() => {
     if (!_client) return;
-    const eventSource = new EventSource(`/api/subscribeUpstash?channel=${_client._joinInfo.uid}`);
-    console.log("eventSource")
-    console.log(eventSource)
-    eventSource.onmessage = async (event) => {
-      console.log("carregando mensagem")
-      const data = JSON.parse(event.data);
-      console.log("📩 Mensagem recebida:", data);
-
-      // Envia um "ping" de resposta
-      await fetch("/api/publishUpstash", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          channel: "server", // ou outro canal que quiser
-          message: {
-            from: _client.intUid,
-            type: "ping",
-            original: data
-          }
-        }),
-      });
-    };
 
     eventSource.onerror = (err) => {
       console.error("❌ Erro na conexão SSE:", err);
@@ -130,6 +108,29 @@ const NomePage = () => {
     _client.on("user-published",handlePublish);
     _client.on("user-joined", handleJoin);
     _client.on("user-left", handleLeave);
+
+    const eventSource = new EventSource(`/api/subscribeUpstash?channel=${_client._joinInfo.uid}`);
+    console.log("eventSource")
+    console.log(eventSource)
+    eventSource.onmessage = async (event) => {
+      console.log("carregando mensagem")
+      const data = JSON.parse(event.data);
+      console.log("📩 Mensagem recebida:", data);
+
+      // Envia um "ping" de resposta
+      /*await fetch("/api/publishUpstash", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          channel: "server", // ou outro canal que quiser
+          message: {
+            from: _client.intUid,
+            type: "ping",
+            original: data
+          }
+        }),
+      });*/
+    };
 
     // Atualiza lista inicial
     atualizarListaAgora();
