@@ -1,58 +1,43 @@
-// app/api/subscribeUpstash/route.js
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
+import { Redis } from "@upstash/redis";
 
-export const runtime = 'nodejs'; // força modo full Node no Render
+const redis = Redis.fromEnv();
 
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
-  const channel = searchParams.get('channel');
+  const channel = searchParams.get("channel");
 
   if (!channel) {
-    return NextResponse.json({ error: 'Canal não especificado' }, { status: 400 });
+    return NextResponse.json({ error: "Channel obrigatório" }, { status: 400 });
   }
 
-  return new Response(
-    new ReadableStream({
-      async start(controller) {
-        controller.enqueue(`: conectado ao canal ${channel}\n\n`);
+  const stream = new ReadableStream({
+    async start(controller) {
+      // Configura a assinatura
+      const sub = redis.subscribe(channel, (message) => {
+        // Envia o evento pro navegador
+        const payload = `data: ${JSON.stringify(message)}\n\n`;
+        controller.enqueue(new TextEncoder().encode(payload));
+      });
 
-        const encoder = new TextEncoder();
+      // Keep-alive a cada 20 segundos
+      const keepAlive = setInterval(() => {
+        controller.enqueue(new TextEncoder().encode(": keep-alive\n\n"));
+      }, 20000);
 
-        try {
-          while (true) {
-            const res = await fetch(
-              `${process.env.UPSTASH_REDIS_REST_URL}/get/${channel}`,
-              {
-                headers: {
-                  Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`,
-                },
-                cache: 'no-store',
-              }
-            );
+      req.signal.addEventListener("abort", async () => {
+        clearInterval(keepAlive);
+        (await sub).unsubscribe();
+        controller.close();
+      });
+    },
+  });
 
-            if (res.ok) {
-              const data = await res.json();
-              if (data?.result) {
-                controller.enqueue(encoder.encode(`data: ${data.result}\n\n`));
-              }
-            }
-
-            // Espera 5 segundos antes de checar de novo (sem polling agressivo)
-            await new Promise((r) => setTimeout(r, 5000));
-          }
-        } catch (err) {
-          controller.enqueue(encoder.encode(`event: error\ndata: ${err.message}\n\n`));
-        } finally {
-          controller.close();
-        }
-      },
-    }),
-    {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache, no-transform',
-        Connection: 'keep-alive',
-      },
-    }
-  );
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+    },
+  });
 }

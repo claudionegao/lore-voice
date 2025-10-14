@@ -203,7 +203,6 @@ const NomePage = () => {
 
           const data = await res.json();
           console.log("Resposta da API:", data);
-          setResponse(data);
         } catch (err) {
           console.error("Erro ao chamar a API:", err);
         }
