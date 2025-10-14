@@ -147,7 +147,7 @@ const NomePage = () => {
   }
 
   // 🔹 Checkbox de seleção (apenas narrador)
-    function handleCheckbox(usuario) {
+    async function handleCheckbox(usuario) {
       // calcula a nova lista de selecionados
       const novosSelecionados = selecionados.includes(usuario)
         ? selecionados.filter((u) => u !== usuario)
@@ -177,7 +177,8 @@ const NomePage = () => {
           console.error("Erro ao chamar a API:", err);
         }
       };
-      sendMessage()
+      const resApi = await sendMessage();
+      console.log(resApi);
 
     }
 

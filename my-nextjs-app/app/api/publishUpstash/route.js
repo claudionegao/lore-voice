@@ -1,29 +1,31 @@
-// pages/api/publish.js
 import { Redis } from "@upstash/redis";
+import { NextResponse } from "next/server";
 
-// Configura o Redis usando as variáveis de ambiente
+// Cria cliente Redis com as variáveis do Upstash
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL,
   token: process.env.UPSTASH_REDIS_REST_TOKEN
 });
 
-export default async function POST(req, res) {
-  /*if (req.method !== "POST") {
-    return res.status(405).json({ error: "Método não permitido" });
-  }*/
-
-  const { channel, message } = req.body;
-
-  if (!channel || !message) {
-    return res.status(400).json({ error: "É necessário informar 'channel' e 'message'" });
-  }
-
+export async function POST(req) {
   try {
-    // Publica a mensagem no Upstash
+    const { channel, message } = await req.json();
+
+    if (!channel || !message) {
+      return NextResponse.json(
+        { error: "É necessário informar 'channel' e 'message'" },
+        { status: 400 }
+      );
+    }
+
     const result = await redis.publish(channel, JSON.stringify(message));
-    return res.status(200).json({ ok: true, result });
+
+    return NextResponse.json({ ok: true, result });
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: "Erro ao publicar a mensagem" });
+    console.error("Erro ao publicar no Upstash:", err);
+    return NextResponse.json(
+      { error: "Erro ao publicar a mensagem" },
+      { status: 500 }
+    );
   }
 }
