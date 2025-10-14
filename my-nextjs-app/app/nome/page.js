@@ -148,14 +148,15 @@ const NomePage = () => {
 
   // 🔹 Checkbox de seleção (apenas narrador)
     async function handleCheckbox(usuario) {
-      // calcula a nova lista de selecionados
-      const novosSelecionados = selecionados.includes(usuario)
-        ? selecionados.filter((u) => u !== usuario)
-        : [...selecionados, usuario];
+      const estavaSelecionado = selecionados.includes(usuario);
 
-      // atualiza o estado
+      const novosSelecionados = estavaSelecionado
+        ? selecionados.filter((u) => u !== usuario) // desmarcar
+        : [...selecionados, usuario];               // marcar
+
       setSelecionados(novosSelecionados);
-      console.log(_client)
+
+      const tipo = estavaSelecionado ? true : false;
 
       const sendMessage = async () => {
         try {
@@ -165,8 +166,9 @@ const NomePage = () => {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              channel: "chat",
-              message: `Olá do front-end para ${usuario.nome}!`
+              channel: usuario.id,
+              message: `Olá do front-end para ${usuario.nome}!`,
+              mute: tipo
             }),
           });
 
@@ -178,7 +180,6 @@ const NomePage = () => {
         }
       };
       const resApi = await sendMessage();
-      console.log(resApi);
 
     }
 
