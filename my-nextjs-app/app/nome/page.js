@@ -107,19 +107,24 @@ const NomePage = () => {
     const eventSource = new EventSource(`/api/subscribeUpstash?channel=${_client._joinInfo.uid}`);
     eventSource.onmessage = async (event) => {
       const data = JSON.parse(event.data);
+      const targetUid = data.message.from; // UID do remetente
+      const shouldMute = data.message.mute;
 
-      // Envia um "ping" de resposta
-      if(data.message !== "Received"){
-        await fetch("/api/publishUpstash", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            channel: data.message.from, // ou outro canal que quiser
-            message: "Received"
-          }),
-        });
-      }else{
-        console.log(data.message)
+      if (!_client || !_client.remoteUsers) return;
+
+      // Encontra o usuário remoto
+      const user = _client.remoteUsers.find(u => u.uid.toString() === targetUid.toString());
+      if (!user) return;
+
+      // Verifica se o usuário tem track de áudio
+      if (user.audioTrack) {
+        if (shouldMute) {
+          // Pausa ou para o áudio
+          user.audioTrack.stop(); // ou user.audioTrack.setEnabled(false) dependendo da versão
+        } else {
+          // Toca novamente
+          user.audioTrack.play();
+        }
       }
     };
     eventSource.onerror = (err) => {
