@@ -3,7 +3,7 @@
 import React, { Suspense, useContext, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import UserContext from "../context/UserContext";
-import { sendChannelMessage } from "../../lib/agoraRtmClient";
+import { sendChannelMessage } from "../../lib/agoraRtmClient"; 
 
 const NomePage = () => {
   const { _client } = useContext(UserContext);
@@ -16,7 +16,7 @@ const NomePage = () => {
   const [usuarios, setUsuarios] = useState([]);
   const [volumes, setVolumes] = useState({});
   const [selecionados, setSelecionados] = useState([]);
-  const [volumeVisivel, setVolumeVisivel] = useState({}); // 🔹 controle por UID
+  const [narradorVolumesVisiveis, setNarradorVolumesVisiveis] = useState({});
   const [meuUsuario, setMeuUsuario] = useState({
     nome: nomeParam,
     skill: skillParam,
@@ -26,14 +26,12 @@ const NomePage = () => {
   // 🔹 Atualiza lista com base no remoteUsers sempre que mudar
   async function atualizarListaAgora() {
     if (!_client) return;
-
     try {
       const remoteUsers = _client.remoteUsers || [];
       const listaAtual = remoteUsers.map((u) => ({
-        nome: u.uid.split("@")[0],
-        skill: u.uid.split("@")[1] || "jogador",
-        id: u._uintid,
-        uid: u.uid,
+          nome: u.uid.split("@")[0],
+          skill: u.uid.split("@")[1] || "jogador",
+          id: u._uintid,
       }));
       setUsuarios(listaAtual);
     } catch (err) {
@@ -50,22 +48,21 @@ const NomePage = () => {
       const skill = typeof user.uid === "string" ? user.uid.split("@")[1] : "jogador";
       if (mediaType === "audio" && skill === "jogador") user.audioTrack.play();
     };
-
     const handleJoin = async (user) => {
       console.log(`🔵 ${user.uid} entrou`);
       atualizarListaAgora();
     };
-
     const handleLeave = (user) => {
       console.log(`🔴 ${user.uid} saiu`);
       atualizarListaAgora();
     };
 
-    // Inicializa áudio dos usuários existentes
     _client.remoteUsers.forEach(async (user) => {
       await _client.subscribe(user, "audio");
       const skill = typeof user.uid === "string" ? user.uid.split("@")[1] : "jogador";
-      if (skill === "jogador") user.audioTrack.play();
+      if (skill === "jogador") {
+        user.audioTrack.play();
+      }
     });
 
     _client.enableAudioVolumeIndicator();
@@ -75,12 +72,11 @@ const NomePage = () => {
         const atualizado = { ...prev };
         volumesInfo.forEach(({ uid, level }) => {
           let nome = "";
-          if (uid === 0) {
-            nome = meuUsuario.nome;
-          } else if (typeof uid === "string") {
-            nome = uid.split("@")[0];
+          if (uid === 0) nome = meuUsuario.nome;
+          else if (typeof uid === "string") nome = uid.split("@")[0];
+          if (nome && narradorVolumesVisiveis[nome]) {
+            atualizado[nome] = Math.min(Math.round(level), 100);
           }
-          if (nome) atualizado[nome] = Math.min(Math.round(level), 100);
         });
         return atualizado;
       });
@@ -91,7 +87,7 @@ const NomePage = () => {
     _client.on("user-joined", handleJoin);
     _client.on("user-left", handleLeave);
 
-    // 🔹 SSE para controle de mute/desmute
+    // SSE para mensagens de mute/unmute
     const eventSource = new EventSource(`/api/subscribeUpstash?channel=${_client._joinInfo.uid}`);
     eventSource.onmessage = async (event) => {
       const data = JSON.parse(event.data);
@@ -103,21 +99,20 @@ const NomePage = () => {
       const user = _client.remoteUsers.find(u => u.uid.toString() === targetUid.toString());
       if (!user) return;
 
-      // Controla áudio
+      // Controla play/stop da track
       if (user.audioTrack) {
         if (shouldMute) user.audioTrack.stop();
         else user.audioTrack.play();
       }
 
-      // Controla visibilidade do volume (só para narradores)
-      const isNarrador = typeof user.uid === "string" && user.uid.split("@")[1] === "narrador";
-      if (isNarrador) {
-        setVolumeVisivel(prev => ({
-          ...prev,
-          [user.uid]: !shouldMute
-        }));
-      }
+      // Controla indicador de volume do narrador
+      const nome = user.uid.split("@")[0];
+      setNarradorVolumesVisiveis(prev => ({
+        ...prev,
+        [nome]: !shouldMute
+      }));
     };
+
     eventSource.onerror = (err) => {
       console.error("❌ Erro na conexão SSE:", err);
       eventSource.close();
@@ -130,7 +125,6 @@ const NomePage = () => {
       _client.off("user-published", handlePublish);
       _client.off("user-joined", handleJoin);
       _client.off("user-left", handleLeave);
-      eventSource.close();
     };
   }, [_client]);
 
@@ -161,7 +155,8 @@ const NomePage = () => {
   // 🔹 Checkbox de seleção (apenas narrador)
   async function handleCheckbox(usuario) {
     const estavaSelecionado = selecionados.includes(usuario);
-    const novosSelecionados = estavaSelecionados
+
+    const novosSelecionados = estavaSelecionado
       ? selecionados.filter(u => u !== usuario)
       : [...selecionados, usuario];
 
@@ -188,22 +183,48 @@ const NomePage = () => {
     }
   }
 
-  // 🔹 Renderiza lista de usuários
+  // 🔹 Agrupa usuários
+  const narradores = usuarios.filter((u) => u.skill === "narrador");
+  const jogadores = usuarios.filter((u) => u.skill === "jogador");
+
+  // 🔹 Barra de volume
+  function VolumeBar({ value }) {
+    return (
+      <div style={{
+        width: 48,
+        height: 10,
+        background: "#181824",
+        borderRadius: 4,
+        overflow: "hidden",
+        border: "1px solid #282846",
+        marginLeft: 8,
+        marginRight: 4,
+        display: "flex",
+        alignItems: "center",
+      }}>
+        <div style={{
+          width: `${value}%`,
+          height: "100%",
+          background: value > 70 ? "#22c55e" : value > 30 ? "#eab308" : "#ef4444",
+          transition: "width 0.3s",
+        }} />
+      </div>
+    );
+  }
+
+  // 🔹 Lista de usuários
   function renderUserList(list) {
     return (
       <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
         {list.map((u, i) => (
-          <li
-            key={i}
-            style={{
-              padding: "6px 0",
-              color: u.nome === meuUsuario.nome ? "#fff" : "#b3b3cc",
-              fontWeight: u.nome === meuUsuario.nome ? 700 : 400,
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-            }}
-          >
+          <li key={i} style={{
+            padding: "6px 0",
+            color: u.nome === meuUsuario.nome ? "#fff" : "#b3b3cc",
+            fontWeight: u.nome === meuUsuario.nome ? 700 : 400,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}>
             {u.skill === "jogador" && meuUsuario.skill === "narrador" && (
               <input
                 type="checkbox"
@@ -216,128 +237,63 @@ const NomePage = () => {
             {u.nome === meuUsuario.nome && (
               <span style={{ color: "#6366f1", marginLeft: 6 }}>(você)</span>
             )}
-            <div
-              style={{
-                width: 48,
-                height: 10,
-                background: "#181824",
-                borderRadius: 4,
-                overflow: "hidden",
-                border: "1px solid #282846",
-                marginLeft: 8,
-                marginRight: 4,
-                display: u.skill === "narrador"
-                  ? volumeVisivel[u.uid] ? "flex" : "none"
-                  : "flex",
-                alignItems: "center",
-              }}
-            >
-              <div
-                style={{
-                  width: `${volumes[u.nome] ?? 0}%`,
-                  height: "100%",
-                  background:
-                    volumes[u.nome] > 70
-                      ? "#22c55e"
-                      : volumes[u.nome] > 30
-                      ? "#eab308"
-                      : "#ef4444",
-                  transition: "width 0.3s",
-                }}
-              />
-            </div>
+            {(u.skill === "narrador" && narradorVolumesVisiveis[u.nome]) && (
+              <VolumeBar value={volumes[u.nome] ?? 0} />
+            )}
           </li>
         ))}
       </ul>
     );
   }
 
-  const narradores = usuarios.filter(u => u.skill === "narrador");
-  const jogadores = usuarios.filter(u => u.skill === "jogador");
-
   return (
-    <div
-      style={{
-        maxWidth: 900,
-        margin: "40px auto",
+    <div style={{
+      maxWidth: 900,
+      margin: "40px auto",
+      display: "flex",
+      flexDirection: "row",
+      gap: 32,
+      alignItems: "flex-start",
+      justifyContent: "center",
+    }}>
+      <div style={{
+        background: "#23233a",
+        borderRadius: 16,
+        padding: 32,
+        boxShadow: "0 4px 24px 0 #0006",
+        color: "#f3f3f3",
         display: "flex",
-        flexDirection: "row",
-        gap: 32,
-        alignItems: "flex-start",
-        justifyContent: "center",
-      }}
-    >
-      <div
-        style={{
-          background: "#23233a",
-          borderRadius: 16,
-          padding: 32,
-          boxShadow: "0 4px 24px 0 #0006",
-          color: "#f3f3f3",
+        flexDirection: "column",
+        gap: 24,
+        alignItems: "stretch",
+        minWidth: 320,
+        flex: 1,
+      }}>
+        <h1 style={{
+          textAlign: "center",
+          fontSize: "2rem",
+          fontWeight: 700,
+          margin: 0,
+          color: "#6366f1",
           display: "flex",
-          flexDirection: "column",
-          gap: 24,
-          alignItems: "stretch",
-          minWidth: 320,
-          flex: 1,
-        }}
-      >
-        <h1
-          style={{
-            textAlign: "center",
-            fontSize: "2rem",
-            fontWeight: 700,
-            margin: 0,
-            color: "#6366f1",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            gap: 10,
-          }}
-        >
+          justifyContent: "center",
+          alignItems: "center",
+          gap: 10,
+        }}>
           {meuUsuario.nome} ({meuUsuario.skill})
-          <div
-            style={{
-              width: 48,
-              height: 10,
-              background: "#181824",
-              borderRadius: 4,
-              overflow: "hidden",
-              border: "1px solid #282846",
-              marginLeft: 8,
-              marginRight: 4,
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            <div
-              style={{
-                width: `${volumes[meuUsuario.nome] ?? 0}%`,
-                height: "100%",
-                background:
-                  volumes[meuUsuario.nome] > 70
-                    ? "#22c55e"
-                    : volumes[meuUsuario.nome] > 30
-                    ? "#eab308"
-                    : "#ef4444",
-                transition: "width 0.3s",
-              }}
-            />
-          </div>
+          <VolumeBar value={volumes[meuUsuario.nome] ?? 0} />
         </h1>
 
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span
-            style={{
-              width: 12,
-              height: 12,
-              borderRadius: "50%",
-              background: "#22c55e",
-              display: "inline-block",
-              marginRight: 8,
-              boxShadow: "0 0 6px #22c55e88",
-            }}
-          />
+          <span style={{
+            width: 12,
+            height: 12,
+            borderRadius: "50%",
+            background: "#22c55e",
+            display: "inline-block",
+            marginRight: 8,
+            boxShadow: "0 0 6px #22c55e88",
+          }}/>
           <span style={{ fontWeight: 500, color: "#b3b3cc" }}>Conectado</span>
         </div>
 
@@ -354,24 +310,21 @@ const NomePage = () => {
             fontSize: "1rem",
             cursor: "pointer",
             transition: "background 0.2s",
-          }}
-        >
+          }}>
           Desconectar
         </button>
       </div>
 
-      <div
-        style={{
-          border: "1px solid #282846",
-          borderRadius: 10,
-          padding: "24px 20px",
-          background: "#232345",
-          minWidth: 220,
-          maxWidth: 280,
-          flex: "0 0 220px",
-          boxSizing: "border-box",
-        }}
-      >
+      <div style={{
+        border: "1px solid #282846",
+        borderRadius: 10,
+        padding: "24px 20px",
+        background: "#232345",
+        minWidth: 220,
+        maxWidth: 280,
+        flex: "0 0 220px",
+        boxSizing: "border-box",
+      }}>
         <div style={{ marginBottom: 10, color: "#a5b4fc", fontWeight: 500 }}>
           Narradores
         </div>
