@@ -8,9 +8,9 @@ const redis = new Redis({
 });
 
 export default async function POST(req, res) {
-  if (req.method !== "POST") {
+  /*if (req.method !== "POST") {
     return res.status(405).json({ error: "Método não permitido" });
-  }
+  }*/
 
   const { channel, message } = req.body;
 
