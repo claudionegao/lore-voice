@@ -18,7 +18,8 @@
     "agora-rtm-sdk": "^2.2.2",
     "next": "latest",
     "react": "latest",
-    "react-dom": "latest"
+    "react-dom": "latest",
+    "@upstash/redis": "^2.4.0"
   },
   "devDependencies": {
     "@types/node": "24.5.2",
