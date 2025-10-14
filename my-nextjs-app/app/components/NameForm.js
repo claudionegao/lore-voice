@@ -85,11 +85,11 @@ const NameForm = () => {
     //_setMclient(mclient)
 
     
-    await fetch("/api/updateDB", {
+    /*await fetch("/api/updateDB", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ nome: name, skill }),
-    });
+    });*/
     
     _setClient(rtcClient);
     router.push(`/nome?nome=${encodeURIComponent(name)}&skill=${encodeURIComponent(skill)}`);
