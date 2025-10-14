@@ -156,6 +156,29 @@ const NomePage = () => {
       // atualiza o estado
       setSelecionados(novosSelecionados);
       console.log(_client)
+
+      const sendMessage = async () => {
+        try {
+          const res = await fetch("/api/publish", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              channel: "chat",
+              message: `Olá do front-end para ${usuario.nome}!`
+            }),
+          });
+
+          const data = await res.json();
+          console.log("Resposta da API:", data);
+          setResponse(data);
+        } catch (err) {
+          console.error("Erro ao chamar a API:", err);
+        }
+      };
+      sendMessage()
+
     }
 
   // 🔹 Agrupa usuários
