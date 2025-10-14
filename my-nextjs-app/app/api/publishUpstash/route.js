@@ -21,8 +21,8 @@ export async function POST(req) {
     const data = await res.json();
 
     return NextResponse.json({ ok: true, result: data });
-  } catch (err) {
-    console.error("Erro ao publicar no Upstash:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
-  }
+    } catch (err) {
+    console.error("Erro completo do publish:", err);
+    return res.status(500).json({ error: err.message, stack: err.stack });
+    }
 }
