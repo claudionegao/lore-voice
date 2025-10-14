@@ -232,7 +232,7 @@ const NomePage = () => {
   const jogadores = usuarios.filter((u) => u.skill === "jogador");
 
   // 🔹 Barra de volume fake (só visual)
-  function VolumeBar({ value,vol }) {
+  function VolumeBar({ value }) {
     return (
       <div
         style={{
@@ -244,7 +244,7 @@ const NomePage = () => {
           border: "1px solid #282846",
           marginLeft: 8,
           marginRight: 4,
-          display: vol ? "flex" : "none",
+          display: "flex",
           alignItems: "center",
         }}
       >
@@ -293,7 +293,7 @@ const NomePage = () => {
             {u.nome === meuUsuario.nome && (
               <span style={{ color: "#6366f1", marginLeft: 6 }}>(você)</span>
             )}
-            <VolumeBar value={volumes[u.nome] ?? 0} vol={u.vol} />
+            <VolumeBar value={volumes[u.nome] ?? 0} />
           </li>
         ))}
       </ul>
