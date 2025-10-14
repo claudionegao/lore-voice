@@ -196,8 +196,8 @@ const NomePage = () => {
             body: JSON.stringify({
               channel: usuario.id,
               message: {
-                to: usuario.nome
-                from: meuUsuario.id
+                to: usuario.nome,
+                from: meuUsuario.id,
                 text:`Olá do front-end para ${usuario.nome}!`,
                 mute: tipo
               }
