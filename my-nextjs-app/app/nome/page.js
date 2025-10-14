@@ -44,11 +44,6 @@ const NomePage = () => {
   useEffect(() => {
     if (!_client) return;
 
-    eventSource.onerror = (err) => {
-      console.error("❌ Erro na conexão SSE:", err);
-      eventSource.close();
-    };
-
     const handlePublish = async (user, mediaType) => {
       await _client.subscribe(user, mediaType);
       const skill = typeof user.uid === "string" ? user.uid.split("@")[1] : "jogador";
@@ -130,6 +125,10 @@ const NomePage = () => {
           }
         }),
       });*/
+    };
+    eventSource.onerror = (err) => {
+      console.error("❌ Erro na conexão SSE:", err);
+      eventSource.close();
     };
 
     // Atualiza lista inicial
