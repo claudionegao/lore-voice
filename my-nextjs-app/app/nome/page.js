@@ -118,6 +118,8 @@ const NomePage = () => {
             message: "Received"
           }),
         });
+      }else{
+        console.log(data.message)
       }
     };
     eventSource.onerror = (err) => {
