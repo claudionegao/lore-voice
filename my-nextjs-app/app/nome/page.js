@@ -62,20 +62,6 @@ const NomePage = () => {
       atualizarListaAgora();
     };
 
-    const handleStream = (uid, streamId, message) => {
-        try {
-          const data = JSON.parse(message.text);
-          console.log(data)
-
-          if(data.type !== "audio-control") return; // ignora outras mensagens
-          if(data.target !== meuUsuario.nome) return;  // só processa se for para mim
-
-          console.log("🔹 Mensagem DataStream recebida para mim:", data);
-        } catch(e) {
-          console.warn("Erro ao processar DataStream:", e);
-        }
-    };
-
     _client.remoteUsers.forEach(async (user) => {
       await _client.subscribe(user, "audio"); // garante receber o stream
 
@@ -113,7 +99,6 @@ const NomePage = () => {
       });
     };
     // Usuário publica áudio
-    _client.on("stream-message",handleStream);
     _client.on("volume-indicator",handleVolume);
     _client.on("user-published",handlePublish);
     _client.on("user-joined", handleJoin);
@@ -123,7 +108,6 @@ const NomePage = () => {
     atualizarListaAgora();
 
     return () => {
-      _client.off("stream-message", handleStream);
       _client.off("volume-indicator",handleVolume);
       _client.off("user-published",handlePublish)
       _client.off("user-joined", handleJoin);
@@ -172,21 +156,6 @@ const NomePage = () => {
       // atualiza o estado
       setSelecionados(novosSelecionados);
       console.log(_client)
-
-      //RTM
-      sendChannelMessage(`test para ${usuario.nome}`)
-
-
-      // envia mensagem para os jogadores
-      const action = novosSelecionados.includes(usuario.nome) ? "unmute" : "mute";
-      const payload = {
-        type: "audio-control",
-        target: usuario.id,
-        action,
-        from: meuUsuario.id // narrador que envia
-      };
-      console.log(_client._dataTrack)
-      if (_client._dataTrack) _client.send(_client._dataTrack, JSON.stringify(payload));
     }
 
   // 🔹 Agrupa usuários

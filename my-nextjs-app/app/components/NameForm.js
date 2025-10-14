@@ -14,7 +14,7 @@ const NameForm = () => {
   const [skill, setSkill] = useState("narrador"); // skill selecionada
   const [AgoraRTC, setAgoraRTC] = useState(null);
   const router = useRouter();
-  const { _client, _setClient,users, setUsers,_mClient,_setMclient } = useContext(UserContext);
+  const { _setClient } = useContext(UserContext);
 
   
   // 🔹 Aguarda conexão RTC
@@ -57,14 +57,6 @@ const NameForm = () => {
     
     import("agora-rtc-sdk-ng").then((mod) => setAgoraRTC(mod.default));
   }, []);
-  useEffect(()=>{
-    if (!_mClient) return;
-    onChannelMessage((msg, from) => {
-      console.log("Mensagem recebida:", msg, "de", from);
-    });
-
-
-  },[_mClient]);
   
   // 🔹 Submissão do formulário
   async function handleSubmit(e) {
@@ -88,9 +80,9 @@ const NameForm = () => {
     await waitForConnection(rtcClient);
 
     //RTM
-    const rtmToken = RtmTokenBuilder.buildToken(appId, appCertificate, name+'@'+skill, RtmRole.Rtm_User, 3600);
-    const mclient = await createRtmClient(appId, name+'@'+skill, "LoreVoice", rtmToken)
-    _setMclient(mclient)
+    //const rtmToken = RtmTokenBuilder.buildToken(appId, appCertificate, name+'@'+skill, RtmRole.Rtm_User, 3600);
+    //const mclient = await createRtmClient(appId, name+'@'+skill, "LoreVoice", rtmToken)
+    //_setMclient(mclient)
 
     
     await fetch("/api/updateDB", {
@@ -100,19 +92,7 @@ const NameForm = () => {
     });
     
     _setClient(rtcClient);
-    await criarDataStream(rtcClient)
     router.push(`/nome?nome=${encodeURIComponent(name)}&skill=${encodeURIComponent(skill)}`);
-  }
-  async function criarDataStream(DSclient) {
-    try {
-      console.log(DSclient)
-      const [dataTrack] = await DSclient.createDataStream({ reliable: true, ordered: true });
-      await DSclient.publish(dataTrack);
-      DSclient._dataTrack = dataTrack;
-      console.log("DataStream criado:", streamId);
-    } catch (e) {
-      console.error("Erro ao criar DataStream:", e);
-    }
   }
   
   return (
