@@ -44,8 +44,10 @@ const NomePage = () => {
   useEffect(() => {
     if (!_client) return;
     const eventSource = new EventSource(`/api/subscribeUpstash?channel=${_client._joinInfo.uid}`);
+    console.log("eventSource")
     console.log(eventSource)
     eventSource.onmessage = async (event) => {
+      console.log("carregando mensagem")
       const data = JSON.parse(event.data);
       console.log("📩 Mensagem recebida:", data);
 

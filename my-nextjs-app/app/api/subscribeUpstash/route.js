@@ -13,6 +13,7 @@ export async function GET(req) {
 
   const stream = new ReadableStream({
     async start(controller) {
+      console.log("🔌 SSE iniciado no canal:", channel);
       // Configura a assinatura
       const sub = redis.subscribe(channel, (message) => {
         // Envia o evento pro navegador
