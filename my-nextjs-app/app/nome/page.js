@@ -127,6 +127,34 @@ const NomePage = () => {
     if (!_client || _client.connectionState !== "CONNECTED") {
       router.replace("/");
     }
+    const eventSource = new EventSource(`/api/subscribeUpstash?channel=${_client.intUid}`);
+
+    eventSource.onmessage = async (event) => {
+        const data = JSON.parse(event.data);
+        console.log("📩 Mensagem recebida:", data);
+
+        // Envia um "ping" de resposta
+        await fetch("/api/publishUpstash", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            channel: "server", // ou outro canal que quiser
+            message: {
+              from: _client.intUid,
+              type: "ping",
+              original: data
+            }
+          }),
+        });
+      };
+
+      eventSource.onerror = (err) => {
+        console.error("❌ Erro na conexão SSE:", err);
+        eventSource.close();
+      };
+
+      return () => eventSource.close();
+
   }, [_client]);
 
   // 🔹 Desconectar
@@ -167,8 +195,12 @@ const NomePage = () => {
             },
             body: JSON.stringify({
               channel: usuario.id,
-              message: `Olá do front-end para ${usuario.nome}!`,
-              mute: tipo
+              message: {
+                to: usuario.nome
+                from: meuUsuario.id
+                text:`Olá do front-end para ${usuario.nome}!`,
+                mute: tipo
+              }
             }),
           });
 
@@ -179,7 +211,7 @@ const NomePage = () => {
           console.error("Erro ao chamar a API:", err);
         }
       };
-      const resApi = await sendMessage();
+      await sendMessage();
 
     }
 
