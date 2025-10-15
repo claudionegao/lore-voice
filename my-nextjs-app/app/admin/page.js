@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import messeger from "@/lib/messeger";
+import messeger from "../../lib/messagelib";
 
 export default function AdminPage() {
   const [authorized, setAuthorized] = useState(false);
