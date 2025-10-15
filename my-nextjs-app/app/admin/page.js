@@ -1,26 +1,32 @@
 "use client";
 import { useState, useEffect } from "react";
-import messeger from "../../lib/messagelib";
 
 export default function AdminPage() {
   const [authorized, setAuthorized] = useState(false);
   const [password, setPassword] = useState("");
-  const correctPassword = process.env.NEXT_PUBLIC_ADMIN_PASS; // defina no .env.local
+  const [messager, setMessager] = useState(null);
+
+  const correctPassword = process.env.NEXT_PUBLIC_ADMIN_PASS; // variável de ambiente
 
   useEffect(() => {
-    // escuta solicitações de acesso
-    messeger.mListener("admin");
+    // Importa dinamicamente o messagelib apenas no cliente
+    import("../../lib/messagelib").then((mod) => {
+      setMessager(mod.default);
+      mod.default.mListener("admin");
+    });
   }, []);
 
-  function handleLogin() {
+  async function handleLogin() {
     if (password === correctPassword) {
       setAuthorized(true);
-      messeger.sMessage("access", {
-        name: "Administrador",
-        approved: true,
-        timestamp: Date.now(),
-        message: "Acesso permitido",
-      });
+      if (messager) {
+        await messager.sMessage("access", {
+          name: "Administrador",
+          approved: true,
+          timestamp: Date.now(),
+          message: "Acesso permitido",
+        });
+      }
     } else {
       alert("Senha incorreta");
     }
@@ -29,9 +35,13 @@ export default function AdminPage() {
   return (
     <div className="relative min-h-screen bg-gray-900 text-white">
       {/* Conteúdo da página */}
-      <div className={`${authorized ? "opacity-100" : "opacity-20 blur-sm"} transition-all duration-500`}>
+      <div
+        className={`${
+          authorized ? "opacity-100" : "opacity-20 blur-sm"
+        } transition-all duration-500`}
+      >
         <h1 className="text-3xl font-bold p-6">Painel Administrativo</h1>
-        {/* funções aqui */}
+        {/* suas funções administrativas aqui */}
       </div>
 
       {/* Overlay de bloqueio */}
