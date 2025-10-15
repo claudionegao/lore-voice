@@ -111,13 +111,13 @@ const NomePage = () => {
       const data = JSON.parse(event.data);
       const targetUid = data.message.from; // UID do remetente
       const shouldMute = data.message.mute;
-
+      console.log(data.message)
       if (!_client || !_client.remoteUsers) return;
 
       // Encontra o usuário remoto
       const user = _client.remoteUsers.find(u => u.uid.toString() === targetUid.toString());
       if (!user) return;
-
+      console.log(user)
       // Verifica se o usuário tem track de áudio
       if (user.audioTrack) {
         if (shouldMute) {
