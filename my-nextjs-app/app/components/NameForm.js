@@ -2,151 +2,131 @@
 import React, { useState, useContext, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import UserContext from "../context/UserContext";
-import { RtmTokenBuilder, RtmRole } from "agora-access-token";
-import { createRtmClient, onChannelMessage } from "../../lib/agoraRtmClient"; 
-
-
-const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID;
-const appCertificate = process.env.NEXT_PUBLIC_AGORA_APP_CERTIFICATE;
+import messeger from "../../lib/messagelib";
 
 const NameForm = () => {
   const [name, setName] = useState("");
-  const [skill, setSkill] = useState("narrador"); // skill selecionada
+  const [skill, setSkill] = useState("narrador");
+  const [awaitingApproval, setAwaitingApproval] = useState(false);
   const [AgoraRTC, setAgoraRTC] = useState(null);
   const router = useRouter();
   const { _setClient } = useContext(UserContext);
 
-  
-  // 🔹 Aguarda conexão RTC
-  function waitForConnection(client, timeout = 5000) {
-    return new Promise((resolve, reject) => {
-      if (client.connectionState === "CONNECTED") return resolve();
-
-      const timer = setTimeout(() => {
-        client.off("connection-state-change", onChange);
-        reject(new Error("Tempo esgotado para conectar ao canal"));
-      }, timeout);
-      
-      function onChange(state) {
-        if (state === "CONNECTED") {
-          clearTimeout(timer);
-          client.off("connection-state-change", onChange);
-          resolve();
-        }
-      }
-      
-      client.on("connection-state-change", onChange);
-    });
-  }
-  
-  // 🔹 Busca usuários do DB
-  async function buscarUsuariosDB() {
-    try {
-      const res = await fetch("/api/getUsers");
-      const data = await res.json();
-      return data.users || [];
-    } catch (err) {
-      console.error("Erro ao buscar usuários:", err);
-      return [];
-    }
-  }
-  
-  // 🔹 Import dinâmico apenas no browser
+  // Import dinâmico do RTC
   useEffect(() => {
     if (typeof window === "undefined") return;
-    
     import("agora-rtc-sdk-ng").then((mod) => setAgoraRTC(mod.default));
   }, []);
-  
-  // 🔹 Submissão do formulário
+
+  // Função para enviar solicitação
+  async function sendRequest() {
+    await messeger.sMessage("admin", {
+      name,
+      skill,
+      timestamp: Date.now(),
+    });
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!AgoraRTC) return;
-    
+    if (!name || !AgoraRTC) return;
+
+    // 1️⃣ Envia solicitação
+    await sendRequest();
+    setAwaitingApproval(true);
+
+    // 2️⃣ Escuta aprovação
+    const listener = messeger.mListener("access");
+    listener.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.message.name === name && data.message.approved) {
+        // Conectar RTC
+        connectRtc();
+      }
+    };
+  }
+
+  async function connectRtc() {
     const rtcClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
-    
-    
     const res = await fetch("/api/token", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ channel: "LoreVoice", name }),
     });
     const { token } = await res.json();
-    
-    //RTC
-    await rtcClient.join(appId, "LoreVoice", token, name+'@'+skill);
+    await rtcClient.join(process.env.NEXT_PUBLIC_AGORA_APP_ID, "LoreVoice", token, name + "@" + skill);
     const micTrack = await AgoraRTC.createMicrophoneAudioTrack();
     await rtcClient.publish([micTrack]);
-    await waitForConnection(rtcClient);
-
-    //RTM
-    //const rtmToken = RtmTokenBuilder.buildToken(appId, appCertificate, name+'@'+skill, RtmRole.Rtm_User, 3600);
-    //const mclient = await createRtmClient(appId, name+'@'+skill, "LoreVoice", rtmToken)
-    //_setMclient(mclient)
-
-    
-    /*await fetch("/api/updateDB", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nome: name, skill }),
-    });*/
-    
     _setClient(rtcClient);
     router.push(`/nome?nome=${encodeURIComponent(name)}&skill=${encodeURIComponent(skill)}`);
   }
-  
+
   return (
-    <form
-    onSubmit={handleSubmit}
-    className="flex flex-col items-center gap-4 p-6 bg-white rounded-lg shadow-md max-w-sm mx-auto"
-    >
-      <label htmlFor="name" className="text-lg font-semibold text-gray-700">
-        Qual seu nome?
-      </label>
-      <input
-        id="name"
-        type="text"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Digite seu nome"
-        className="border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-        required
-      />
-
-      {/* Skill selector */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+    <>
+      {!awaitingApproval ? (
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col items-center gap-4 p-6 bg-white rounded-lg shadow-md max-w-sm mx-auto"
+        >
+          <label className="text-lg font-semibold text-gray-700">Qual seu nome?</label>
           <input
-            type="radio"
-            name="skill"
-            value="narrador"
-            checked={skill === "narrador"}
-            onChange={() => setSkill("narrador")}
-            style={{ accentColor: "#6366f1" }}
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Digite seu nome"
+            className="border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            required
           />
-          Narrador
-        </label>
-        <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <input
-            type="radio"
-            name="skill"
-            value="jogador"
-            checked={skill === "jogador"}
-            onChange={() => setSkill("jogador")}
-            style={{ accentColor: "#6366f1" }}
-          />
-          Jogador
-        </label>
-      </div>
 
-      <button
-        type="submit"
-        className="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700 transition"
-        disabled={!AgoraRTC}
-      >
-        Connect
-      </button>
-    </form>
+          {/* Skill selector */}
+          <div className="flex flex-col gap-2">
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="skill"
+                value="narrador"
+                checked={skill === "narrador"}
+                onChange={() => setSkill("narrador")}
+                style={{ accentColor: "#6366f1" }}
+              />
+              Narrador
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="skill"
+                value="jogador"
+                checked={skill === "jogador"}
+                onChange={() => setSkill("jogador")}
+                style={{ accentColor: "#6366f1" }}
+              />
+              Jogador
+            </label>
+          </div>
+
+          <button
+            type="submit"
+            className="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700 transition"
+          >
+            Connect
+          </button>
+        </form>
+      ) : (
+        // Janela aguardando aprovação
+        <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm z-20">
+          <div className="bg-white p-6 rounded-2xl shadow-lg w-80 text-center border border-blue-600">
+            <h2 className="text-xl font-semibold mb-4">Aguardando aprovação</h2>
+            <p className="mb-4">Sua solicitação foi enviada ao administrador.</p>
+            <button
+              onClick={sendRequest}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition font-semibold"
+            >
+              Reenviar
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

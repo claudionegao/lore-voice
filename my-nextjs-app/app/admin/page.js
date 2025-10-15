@@ -9,22 +9,13 @@ export default function AdminPage() {
 
   const correctPassword = process.env.NEXT_PUBLIC_ADMIN_PASS;
 
-  // Mock de solicitações para teste
-  const mockRequests = [
-    { name: "Usuário 1", timestamp: Date.now() - 10000 },
-    { name: "Usuário 2", timestamp: Date.now() - 5000 },
-    { name: "Usuário 3", timestamp: Date.now() },
-  ];
-
   function handleLogin() {
     if (password === correctPassword) {
       setAuthorized(true);
 
-      // inicia mock para teste
-      setRequests(mockRequests);
-
-      // começa a escutar solicitações reais
-      messeger.mListener("admin").onmessage = (event) => {
+      // inicia listener real
+      const listener = messeger.mListener("admin");
+      listener.onmessage = (event) => {
         const data = JSON.parse(event.data);
         setRequests((prev) => [...prev, data.message]);
       };
