@@ -153,13 +153,6 @@ const NomePage = () => {
       _client.off("user-published",handlePublish)
       _client.off("user-joined", handleJoin);
       _client.off("user-left", handleLeave);
-
-      //configuração rtm
-      createRtmClient(APP_ID, uid, channel, rtmToken).then(() => {
-        onChannelMessage((msg, from) => {
-          console.log("Mensagem recebida:", msg, "de", from);
-        });
-      });
     };
   }, [_client]);
 
