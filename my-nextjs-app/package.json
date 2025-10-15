@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start -p $PORT",
+    "prisma:generate":"prisma generate --no-engine",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.16.3",
@@ -13,9 +15,11 @@
     "@vercel/postgres": "^0.10.0",
     "agora-access-token": "^2.0.4",
     "agora-rtc-sdk-ng": "^4.10.0",
+    "agora-rtm-sdk": "^2.2.2",
     "next": "latest",
     "react": "latest",
-    "react-dom": "latest"
+    "react-dom": "latest",
+    "@upstash/redis": "^1.35.6"
   },
   "devDependencies": {
     "@types/node": "24.5.2",
