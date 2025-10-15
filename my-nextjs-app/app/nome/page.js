@@ -3,7 +3,6 @@
 import React, { Suspense, useContext, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import UserContext from "../context/UserContext";
-import { sendChannelMessage } from "../../lib/agoraRtmClient"; 
 
 const NomePage = () => {
   const { _client } = useContext(UserContext);
