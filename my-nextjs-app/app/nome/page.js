@@ -48,9 +48,8 @@ const NomePage = () => {
 
     const handlePublish = async (user, mediaType) => {
       await _client.subscribe(user, mediaType);
-      user.audioTrack.play();
       const skill = typeof user.uid === "string" ? user.uid.split("@")[1] : "jogador";
-      if (!(mediaType === "audio" && skill === "jogador" || meuUsuario.skill == "Narrador")) user.audioTrack.setVolume(0)
+      if (mediaType === "audio" && skill === "jogador" || meuUsuario.skill == "Narrador") user.audioTrack.play();
 
     };
     const handleJoin = async (user) => {
@@ -67,16 +66,13 @@ const NomePage = () => {
 
     _client.remoteUsers.forEach(async (user) => {
       await _client.subscribe(user, "audio"); // garante receber o stream
-      user.audioTrack.play();
-      user.audioTrack.setVolume(0)
-
 
       // extrai skill do UID
       const skill = typeof user.uid === "string" ? user.uid.split("@")[1] : "jogador";
 
       // toca o áudio localmente apenas se for jogador
       if (skill === "jogador" || meuUsuario.skill == "Narrador") {
-        user.audioTrack.setVolume(100)
+        user.audioTrack.play();
       }
     });
 
@@ -127,10 +123,10 @@ const NomePage = () => {
       if (user.audioTrack) {
         if (shouldMute) {
           // Pausa ou para o áudio
-          user.audioTrack.setVolume(0)
+          user.audioTrack.stop(); // ou user.audioTrack.setEnabled(false) dependendo da versão
         } else {
           // Toca novamente
-          user.audioTrack.setVolume(100)
+          user.audioTrack.play();
         }
         // 🔹 Atualiza a lista de usuários para refletir o vol
         const listaAtual = _client.remoteUsers.map((u) => {
