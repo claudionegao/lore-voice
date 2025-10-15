@@ -40,7 +40,7 @@ const NameForm = () => {
     // Calcula novo timer (aumenta 50% após a primeira vez)
     const newTimer =
       requestCount.current > 1
-        ? Math.floor(timerDuration * 1.5)
+        ? Math.ceil(timerDuration * 1.7)
         : timerDuration;
 
     setTimer(newTimer);
@@ -58,6 +58,9 @@ const NameForm = () => {
         return prev - 1;
       });
     }, 1000);
+    buttonClass = buttonDisabled
+    ? "bg-gray-400 cursor-not-allowed text-gray-200 w-full px-4 py-2 rounded font-semibold transition"
+    : "bg-blue-600 hover:bg-blue-700 text-white w-full px-4 py-2 rounded font-semibold transition";
   }
 
   async function handleSubmit(e) {
@@ -106,7 +109,7 @@ const NameForm = () => {
     );
   }
 
-  const buttonClass = buttonDisabled
+  let buttonClass = buttonDisabled
     ? "bg-gray-400 cursor-not-allowed text-gray-200 w-full px-4 py-2 rounded font-semibold transition"
     : "bg-blue-600 hover:bg-blue-700 text-white w-full px-4 py-2 rounded font-semibold transition";
 
