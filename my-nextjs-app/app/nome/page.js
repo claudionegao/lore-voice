@@ -71,7 +71,7 @@ const NomePage = () => {
       const skill = typeof user.uid === "string" ? user.uid.split("@")[1] : "jogador";
 
       // toca o áudio localmente apenas se for jogador
-      if (skill === "jogador") {
+      if (skill === "jogador" || meuUsuario.skill == "Narrador") {
         user.audioTrack.play();
       }
     });
@@ -115,9 +115,10 @@ const NomePage = () => {
       if (!_client || !_client.remoteUsers) return;
 
       // Encontra o usuário remoto
-      const user = _client.remoteUsers.find(u => u.uid.toString() === targetUid.toString());
-      console.log(_client.remoteUsers)
+      const user = _client.remoteUsers.find(u => u._intuid.toString() === targetUid.toString());
+      console.log(_client.remoteUsers);
       if (!user) return;
+      console.log(user);
       // Verifica se o usuário tem track de áudio
       if (user.audioTrack) {
         if (shouldMute) {
