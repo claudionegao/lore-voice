@@ -19,7 +19,7 @@ const NomePage = () => {
   const [meuUsuario, setMeuUsuario] = useState({
     nome: nomeParam,
     skill: skillParam,
-    id: _client._joinInfo.uid,,
+    id: _client._joinInfo.uid,
     vol:true
   });
 
