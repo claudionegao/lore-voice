@@ -28,7 +28,6 @@ const messager = {
           return data.message;
         }
     }
-    return {sMessage,mListener}
 }
 
 export default messager
