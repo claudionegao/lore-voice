@@ -27,7 +27,7 @@ const messager = {
           console.log(data.message)
           return data.message;
         }
-    }
-}
+    },
+};
 
 export default messager
