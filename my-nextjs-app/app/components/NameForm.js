@@ -38,9 +38,10 @@ const NameForm = () => {
     requestCount.current += 1;
 
     // Calcula novo timer (aumenta 50% após a primeira vez)
-    const newTimer = requestCount.current > 1
-      ? Math.floor(timerDuration * 1.5)
-      : timerDuration;
+    const newTimer =
+      requestCount.current > 1
+        ? Math.floor(timerDuration * 1.5)
+        : timerDuration;
 
     setTimer(newTimer);
     setButtonDisabled(true);
@@ -98,8 +99,16 @@ const NameForm = () => {
     const micTrack = await AgoraRTC.createMicrophoneAudioTrack();
     await rtcClient.publish([micTrack]);
     _setClient(rtcClient);
-    router.push(`/nome?nome=${encodeURIComponent(name)}&skill=${encodeURIComponent(skill)}`);
+    router.push(
+      `/nome?nome=${encodeURIComponent(name)}&skill=${encodeURIComponent(
+        skill
+      )}`
+    );
   }
+
+  const buttonClass = buttonDisabled
+    ? "bg-gray-400 cursor-not-allowed text-gray-200 w-full px-4 py-2 rounded font-semibold transition"
+    : "bg-blue-600 hover:bg-blue-700 text-white w-full px-4 py-2 rounded font-semibold transition";
 
   return (
     <>
@@ -108,7 +117,9 @@ const NameForm = () => {
           onSubmit={handleSubmit}
           className="flex flex-col items-center gap-4 p-6 bg-white rounded-lg shadow-md max-w-sm mx-auto"
         >
-          <label className="text-lg font-semibold text-gray-700">Qual seu nome?</label>
+          <label className="text-lg font-semibold text-gray-700">
+            Qual seu nome?
+          </label>
           <input
             type="text"
             value={name}
@@ -160,7 +171,7 @@ const NameForm = () => {
             <button
               onClick={sendRequest}
               disabled={buttonDisabled}
-              className={buttonDisabled ? "bg-gray-400 cursor-not-allowed text-gray-200 w-full px-4 py-2 rounded font-semibold transition" : "bg-blue-600 hover:bg-blue-700 text-white w-full px-4 py-2 rounded font-semibold transition"}
+              className={buttonClass}
             >
               {buttonDisabled ? `Aguardar ${timer}s` : "Reenviar"}
             </button>
