@@ -115,8 +115,8 @@ const NomePage = () => {
       if (!_client || !_client.remoteUsers) return;
 
       // Encontra o usuário remoto
-      const user = _client.remoteUsers.find(u => u._intuid.toString() === targetUid.toString());
       console.log(_client.remoteUsers);
+      const user = _client.remoteUsers.find(u => u._uintid.toString() === targetUid.toString());
       if (!user) return;
       console.log(user);
       // Verifica se o usuário tem track de áudio
