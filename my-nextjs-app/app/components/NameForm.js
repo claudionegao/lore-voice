@@ -160,13 +160,9 @@ const NameForm = () => {
             <button
               onClick={sendRequest}
               disabled={buttonDisabled}
-              className={`w-full px-4 py-2 rounded font-semibold transition
-                ${buttonDisabled
-                  ? "bg-gray-400 cursor-not-allowed text-gray-200"
-                  : "bg-blue-600 hover:bg-blue-700 text-white"
-                }`}
+              className={buttonDisabled ? "bg-gray-400 cursor-not-allowed text-gray-200 w-full px-4 py-2 rounded font-semibold transition" : "bg-blue-600 hover:bg-blue-700 text-white w-full px-4 py-2 rounded font-semibold transition"}
             >
-              {buttonDisabled ? `Reenviar em ${timer}s` : "Reenviar"}
+              {buttonDisabled ? `Aguardar ${timer}s` : "Reenviar"}
             </button>
           </div>
         </div>
