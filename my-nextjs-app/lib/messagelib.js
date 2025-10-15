@@ -1,5 +1,5 @@
 const messager = {
-    async function sMessage(channel,message){
+    async sMessage(channel,message){
         try {
           const res = await fetch("/api/publishUpstash", {
             method: "POST",
@@ -19,7 +19,7 @@ const messager = {
         }
     };
     
-    async function mListener(channel){
+    async mListener(channel){
         const eventSource = new EventSource(`/api/subscribeUpstash?channel=${channel}`);
         eventSource.onmessage = async (event) => {
           const data = JSON.parse(event.data);
