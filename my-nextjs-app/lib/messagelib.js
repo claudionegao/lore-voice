@@ -17,7 +17,7 @@ const messager = {
         } catch (err) {
           console.error("Erro ao chamar a API:", err);
         }
-    };
+    },
     
     async mListener(channel){
         const eventSource = new EventSource(`/api/subscribeUpstash?channel=${channel}`);
