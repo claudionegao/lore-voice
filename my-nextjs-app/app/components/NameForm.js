@@ -10,8 +10,11 @@ const NameForm = () => {
   const [awaitingApproval, setAwaitingApproval] = useState(false);
   const [buttonDisabled, setButtonDisabled] = useState(false);
   const [timer, setTimer] = useState(0);
-  const [timerDuration, setTimerDuration] = useState(5); // segundos iniciais
+  const [timerDuration, setTimerDuration] = useState(5);
   const [AgoraRTC, setAgoraRTC] = useState(null);
+  const [buttonClass, setButtonClass] = useState(
+    "bg-blue-600 hover:bg-blue-700 text-white w-full px-4 py-2 rounded font-semibold transition"
+  );
 
   const router = useRouter();
   const { _setClient } = useContext(UserContext);
@@ -24,6 +27,19 @@ const NameForm = () => {
     if (typeof window === "undefined") return;
     import("agora-rtc-sdk-ng").then((mod) => setAgoraRTC(mod.default));
   }, []);
+
+  // Atualiza classe do botão sempre que buttonDisabled mudar
+  useEffect(() => {
+    if (buttonDisabled) {
+      setButtonClass(
+        "bg-gray-400 cursor-not-allowed text-gray-200 w-full px-4 py-2 rounded font-semibold transition"
+      );
+    } else {
+      setButtonClass(
+        "bg-blue-600 hover:bg-blue-700 text-white w-full px-4 py-2 rounded font-semibold transition"
+      );
+    }
+  }, [buttonDisabled]);
 
   // Função para enviar solicitação
   async function sendRequest() {
@@ -40,7 +56,7 @@ const NameForm = () => {
     // Calcula novo timer (aumenta 50% após a primeira vez)
     const newTimer =
       requestCount.current > 1
-        ? Math.ceil(timerDuration * 1.7)
+        ? Math.ceil(timerDuration * 1.5)
         : timerDuration;
 
     setTimer(newTimer);
@@ -58,9 +74,6 @@ const NameForm = () => {
         return prev - 1;
       });
     }, 1000);
-    buttonClass = buttonDisabled
-    ? "bg-gray-400 cursor-not-allowed text-gray-200 w-full px-4 py-2 rounded font-semibold transition"
-    : "bg-blue-600 hover:bg-blue-700 text-white w-full px-4 py-2 rounded font-semibold transition";
   }
 
   async function handleSubmit(e) {
@@ -108,10 +121,6 @@ const NameForm = () => {
       )}`
     );
   }
-
-  let buttonClass = buttonDisabled
-    ? "bg-gray-400 cursor-not-allowed text-gray-200 w-full px-4 py-2 rounded font-semibold transition"
-    : "bg-blue-600 hover:bg-blue-700 text-white w-full px-4 py-2 rounded font-semibold transition";
 
   return (
     <>
