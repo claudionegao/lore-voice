@@ -20,25 +20,26 @@ const messager = {
   },
 
   // Escuta mensagens de um canal via SSE
-  async mListener(channel) {
-    try {
-      const eventSource = new EventSource(`/api/subscribeUpstash?channel=${channel}`);
+  mListener(channel, callback) {
+    const eventSource = new EventSource(`/api/subscribeUpstash?channel=${channel}`);
 
-      eventSource.onmessage = async (event) => {
+    eventSource.onmessage = (event) => {
+      try {
         const data = JSON.parse(event.data);
         console.log("📥 From lib:", data.message);
-        return data.message;
-      };
+        if (callback) callback(data.message);
+      } catch (err) {
+        console.error("❌ Erro ao processar mensagem:", err);
+      }
+    };
 
-      eventSource.onerror = (err) => {
-        console.error("❌ Erro na conexão SSE:", err);
-        eventSource.close();
-      };
+    eventSource.onerror = (err) => {
+      console.error("❌ Erro na conexão SSE:", err);
+      eventSource.close();
+    };
 
-      console.log(`👂 Ouvindo canal: ${channel}`);
-    } catch (err) {
-      console.error("❌ Erro ao iniciar listener:", err);
-    }
+    console.log(`👂 Ouvindo canal: ${channel}`);
+    return eventSource;
   },
 };
 

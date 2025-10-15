@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import messeger from "../../lib/messagelib";
 
 export default function AdminPage() {
@@ -9,21 +9,22 @@ export default function AdminPage() {
 
   const correctPassword = process.env.NEXT_PUBLIC_ADMIN_PASS;
 
+  // Login do administrador
   function handleLogin() {
     if (password === correctPassword) {
       setAuthorized(true);
 
-      // inicia listener real
-      const listener = messeger.mListener("admin");
-      listener.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        setRequests((prev) => [...prev, data.message]);
-      };
+      // inicia listener real usando callback
+      const listener = messeger.mListener("admin", (msg) => {
+        setRequests((prev) => [...prev, msg]);
+      });
+
     } else {
       alert("Senha incorreta!");
     }
   }
 
+  // Aprova solicitação
   function handleApprove(req) {
     messeger.sMessage("access", {
       name: req.name,
@@ -34,6 +35,7 @@ export default function AdminPage() {
     setRequests((prev) => prev.filter((r) => r !== req));
   }
 
+  // Nega solicitação
   function handleDeny(req) {
     setRequests((prev) => prev.filter((r) => r !== req));
   }
