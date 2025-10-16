@@ -1,5 +1,4 @@
-import NameForm from './components/NameForm';
-import { UserProvider } from './context/UserContext';
+import NameForm from './components/NameForm/NameForm';
 
 export default function Home() {
   return (
