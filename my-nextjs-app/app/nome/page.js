@@ -157,6 +157,7 @@ const NomePage = () => {
             });
           }
           await _client.leave();
+          localStorage.removeItem("connected");
           console.log("🔴 Desconectado por comando remoto");
         } catch (e) {
           console.warn("Erro ao desconectar remotamente:", e);
