@@ -32,33 +32,27 @@ export async function GET() {
       return NextResponse.json({ users: [] }); // sem ninguém conectado
     }
 
-    // 2️⃣ Buscar informações detalhadas de cada usuário
-    const infoResponse = await fetch(
-      `https://api.agora.io/v1/apps/${appId}/users?userIds=${uids.join(",")}`,
-      {
-        headers: {
-          Authorization: `Basic ${agoraAuth}`,
-        },
-      }
+    // 2️⃣ Buscar status detalhado de cada usuário
+    const users = await Promise.all(
+      uids.map(async (uid) => {
+        const propResponse = await fetch(
+          `https://api.agora.io/dev/v1/channel/user/property/${appId}/${uid}/${channelName}`,
+          {
+            headers: {
+              Authorization: `Basic ${agoraAuth}`,
+            },
+          }
+        );
+
+        if (!propResponse.ok) {
+          const text = await propResponse.text();
+          return { uid, error: text };
+        }
+
+        const propData = await propResponse.json();
+        return { uid, status: propData?.data || {} };
+      })
     );
-
-    if (!infoResponse.ok) {
-      const text = await infoResponse.text();
-      return NextResponse.json(
-        { error: "Erro ao buscar informações dos usuários", details: text },
-        { status: infoResponse.status }
-      );
-    }
-
-    const infoData = await infoResponse.json();
-
-    // 3️⃣ Combinar os dados (uids + info)
-    const users = uids.map((uid) => {
-      const info =
-        infoData?.data?.find?.((u) => u?.userId?.toString() === uid?.toString()) ||
-        {};
-      return { uid, ...info };
-    });
 
     return NextResponse.json({ users });
   } catch (error) {
