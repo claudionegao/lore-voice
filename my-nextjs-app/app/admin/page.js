@@ -7,7 +7,6 @@ export default function AdminPage() {
   const [authorized, setAuthorized] = useState(false);
   const [password, setPassword] = useState("");
   const [requests, setRequests] = useState([]);
-  const [connectedUsers, setConnectedUsers] = useState([]);
 
   const correctPassword = process.env.NEXT_PUBLIC_ADMIN_PASS;
 
@@ -16,17 +15,9 @@ export default function AdminPage() {
     if (password === correctPassword) {
       setAuthorized(true);
 
-      // Listener de solicitações
+      // Listener real
       messeger.mListener("admin", (msg) => {
-        setRequests(prev => {
-          if (prev.some(r => r.name === msg.name)) return prev;
-          return [...prev, msg];
-        });
-      });
-
-      // Listener de usuários conectados
-      messeger.mListener("connected-users", (msg) => {
-        setConnectedUsers(msg.users || []);
+        setRequests((prev) => [...prev, msg]);
       });
     } else {
       alert("Senha incorreta!");
@@ -41,20 +32,12 @@ export default function AdminPage() {
       timestamp: Date.now(),
       message: "Acesso permitido",
     });
-    setRequests(prev => prev.filter(r => r !== req));
+    setRequests((prev) => prev.filter((r) => r !== req));
   }
 
-  // Remove solicitação sem desconectar
+  // Nega solicitação
   function handleDeny(req) {
-    setRequests(prev => prev.filter(r => r !== req));
-  }
-
-  // Desconecta usuário conectado
-  function handleDisconnect(user) {
-    messeger.sMessage("deny", {
-      id: user.id,        // id do usuário conectado
-      timestamp: Date.now(),
-    });
+    setRequests((prev) => prev.filter((r) => r !== req));
   }
 
   return (
@@ -88,7 +71,7 @@ export default function AdminPage() {
       )}
 
       {/* Menu de solicitações */}
-      {authorized && (
+      {authorized && requests.length > 0 && (
         <div className="requests-menu">
           <h3>Solicitações de Acesso</h3>
           {requests.length === 0 ? (
@@ -100,21 +83,6 @@ export default function AdminPage() {
                 <div className="request-buttons">
                   <button className="approve" onClick={() => handleApprove(req)}>Approve</button>
                   <button className="deny" onClick={() => handleDeny(req)}>Deny</button>
-                </div>
-              </div>
-            ))
-          )}
-
-          {/* Usuários conectados */}
-          <h3 style={{ marginTop: 20 }}>Usuários Conectados</h3>
-          {connectedUsers.length === 0 ? (
-            <p>Nenhum usuário conectado.</p>
-          ) : (
-            connectedUsers.map((user, idx) => (
-              <div key={idx} className="request-item">
-                <span>{user.name} ({user.skill})</span>
-                <div className="request-buttons">
-                  <button className="deny" onClick={() => handleDisconnect(user)}>Disconnect</button>
                 </div>
               </div>
             ))
