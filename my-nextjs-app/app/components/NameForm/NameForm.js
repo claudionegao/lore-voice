@@ -19,15 +19,17 @@ const NameForm = () => {
   const timerRef = useRef(null);
   const requestCount = useRef(0);
 
+  // 🔹 Importa o SDK do Agora dinamicamente
   useEffect(() => {
     if (typeof window === "undefined") return;
     import("agora-rtc-sdk-ng").then((mod) => setAgoraRTC(mod.default));
   }, []);
 
+  // 🔹 Timer inicial de 5s (para reenviar solicitação)
   useEffect(() => {
     timerRef.current = setInterval(() => {
-      setTimer(prev => {
-        if(prev <= 1){
+      setTimer((prev) => {
+        if (prev <= 1) {
           clearInterval(timerRef.current);
           setButtonDisabled(false);
           return 0;
@@ -39,6 +41,7 @@ const NameForm = () => {
     return () => clearInterval(timerRef.current);
   }, []);
 
+  // 🔹 Envia a solicitação ao admin
   async function sendRequest() {
     if (!name) return;
 
@@ -55,8 +58,8 @@ const NameForm = () => {
 
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
-      setTimer(prev => {
-        if(prev <= 1){
+      setTimer((prev) => {
+        if (prev <= 1) {
           clearInterval(timerRef.current);
           setButtonDisabled(false);
           return 0;
@@ -66,15 +69,28 @@ const NameForm = () => {
     }, 1000);
   }
 
+  // 🔹 Envia pedido de conexão
   async function handleSubmit(e) {
     e.preventDefault();
     if (!name || !AgoraRTC) return;
 
+    // ✅ Verifica se já está conectado (localStorage)
+    const alreadyConnected = localStorage.getItem("connected");
+    if (alreadyConnected === "true") {
+      console.log("🔁 Já autorizado anteriormente, pulando aprovação.");
+      return connectRtc();
+    }
+
+    // Caso contrário, pede aprovação
     await sendRequest();
     setAwaitingApproval(true);
 
+    // 🔹 Escuta o canal de aprovação
     const listener = messeger.mListener("access", (msg) => {
       if (msg.name === name && msg.approved) {
+        // ✅ Salva estado conectado no localStorage
+        localStorage.setItem("connected", "true");
+
         if (timerRef.current) clearInterval(timerRef.current);
         setTimer(0);
         setButtonDisabled(true);
@@ -83,6 +99,7 @@ const NameForm = () => {
     });
   }
 
+  // 🔹 Conecta ao canal de voz
   async function connectRtc() {
     const rtcClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
     const res = await fetch("/api/token", {
@@ -91,15 +108,18 @@ const NameForm = () => {
       body: JSON.stringify({ channel: "LoreVoice", name }),
     });
     const { token } = await res.json();
+
     await rtcClient.join(
       process.env.NEXT_PUBLIC_AGORA_APP_ID,
       "LoreVoice",
       token,
       name + "@" + skill
     );
+
     const micTrack = await AgoraRTC.createMicrophoneAudioTrack();
     await rtcClient.publish([micTrack]);
     _setClient(rtcClient);
+
     router.push(
       `/nome?nome=${encodeURIComponent(name)}&skill=${encodeURIComponent(skill)}`
     );
@@ -113,7 +133,7 @@ const NameForm = () => {
           <input
             type="text"
             value={name}
-            onChange={e => setName(e.target.value)}
+            onChange={(e) => setName(e.target.value)}
             placeholder="Digite seu nome"
             required
           />
@@ -141,7 +161,9 @@ const NameForm = () => {
             </label>
           </div>
 
-          <button type="submit" className="button connect-button">Connect</button>
+          <button type="submit" className="button connect-button">
+            Connect
+          </button>
         </form>
       ) : (
         <div className="overlay">
@@ -152,7 +174,9 @@ const NameForm = () => {
             <button
               onClick={sendRequest}
               disabled={buttonDisabled}
-              className={`button resend-button ${buttonDisabled ? 'button-disabled' : ''}`}
+              className={`button resend-button ${
+                buttonDisabled ? "button-disabled" : ""
+              }`}
             >
               {buttonDisabled ? `Aguardar ${timer}s` : "Reenviar"}
             </button>
