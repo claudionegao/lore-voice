@@ -19,11 +19,20 @@ const NameForm = () => {
   const timerRef = useRef(null);
   const requestCount = useRef(0);
 
+  // Checa localStorage ao iniciar
+  useEffect(() => {
+    const approved = localStorage.getItem("connected");
+    if (approved) {
+      setAwaitingApproval(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     import("agora-rtc-sdk-ng").then((mod) => setAgoraRTC(mod.default));
   }, []);
 
+  // Timer inicial para habilitar o botão Reenviar
   useEffect(() => {
     timerRef.current = setInterval(() => {
       setTimer(prev => {
@@ -42,6 +51,7 @@ const NameForm = () => {
   async function sendRequest() {
     if (!name) return;
 
+    // Envia mensagem para admin mesmo se já aprovado
     await messeger.sMessage("admin", {
       name,
       skill,
@@ -70,7 +80,16 @@ const NameForm = () => {
     e.preventDefault();
     if (!name || !AgoraRTC) return;
 
+    // Envia solicitação para admin
     await sendRequest();
+
+    // Checa se já foi aprovado localmente
+    const approved = localStorage.getItem("connected");
+    if (approved) {
+      connectRtc(); // conecta direto
+      return;
+    }
+
     setAwaitingApproval(true);
 
     const listener = messeger.mListener("access", (msg) => {
@@ -78,6 +97,10 @@ const NameForm = () => {
         if (timerRef.current) clearInterval(timerRef.current);
         setTimer(0);
         setButtonDisabled(true);
+
+        // salva aprovação local
+        localStorage.setItem("connected", "true");
+
         connectRtc();
       }
     });
