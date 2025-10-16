@@ -1,14 +1,13 @@
 "use client";
-
 import React, { Suspense, useContext, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import UserContext from "../context/UserContext";
+import messeger from "../../lib/messagelib";
 
 const NomePage = () => {
   const { _client } = useContext(UserContext);
   const router = useRouter();
   const searchParams = useSearchParams();
-
   const nomeParam = searchParams.get("nome") || "";
   const skillParam = searchParams.get("skill") || "narrador";
 
@@ -18,22 +17,21 @@ const NomePage = () => {
   const [meuUsuario, setMeuUsuario] = useState({
     nome: nomeParam,
     skill: skillParam,
-    id: _client._joinInfo.uid,
-    vol:true
+    id: _client?._joinInfo?.uid,
+    vol: true,
   });
 
   // 🔹 Atualiza lista com base no remoteUsers sempre que mudar
   async function atualizarListaAgora() {
     if (!_client) return;
-
     try {
       const remoteUsers = _client.remoteUsers || [];
-      // Cria lista completa com so remotos
       const listaAtual = remoteUsers.map((u) => ({
-          nome: u.uid.split("@")[0],
-          skill: u.uid.split("@")[1] || "jogador",
-          id: u._uintid,
-          vol:( (u.uid.split("@")[1] || "jogador") === "jogador" ) ? true : false
+        nome: u.uid.split("@")[0],
+        skill: u.uid.split("@")[1] || "jogador",
+        id: u._uintid,
+        vol:
+          (u.uid.split("@")[1] || "jogador") === "jogador" ? true : false,
       }));
       setUsuarios(listaAtual);
     } catch (err) {
@@ -47,14 +45,17 @@ const NomePage = () => {
 
     const handlePublish = async (user, mediaType) => {
       await _client.subscribe(user, mediaType);
-      const skill = typeof user.uid === "string" ? user.uid.split("@")[1] : "jogador";
-      if (mediaType === "audio" && skill === "jogador" || meuUsuario.skill == "Narrador") user.audioTrack.play();
-
+      const skill =
+        typeof user.uid === "string" ? user.uid.split("@")[1] : "jogador";
+      if (
+        (mediaType === "audio" && skill === "jogador") ||
+        meuUsuario.skill === "Narrador"
+      )
+        user.audioTrack.play();
     };
+
     const handleJoin = async (user) => {
       console.log(`🔵 ${user.uid} entrou`);
-
-      // atualiza lista de usuários
       atualizarListaAgora();
     };
 
@@ -64,13 +65,10 @@ const NomePage = () => {
     };
 
     _client.remoteUsers.forEach(async (user) => {
-      await _client.subscribe(user, "audio"); // garante receber o stream
-
-      // extrai skill do UID
-      const skill = typeof user.uid === "string" ? user.uid.split("@")[1] : "jogador";
-
-      // toca o áudio localmente apenas se for jogador
-      if (skill === "jogador" || meuUsuario.skill == "Narrador") {
+      await _client.subscribe(user, "audio");
+      const skill =
+        typeof user.uid === "string" ? user.uid.split("@")[1] : "jogador";
+      if (skill === "jogador" || meuUsuario.skill === "Narrador") {
         user.audioTrack.play();
       }
     });
@@ -78,81 +76,103 @@ const NomePage = () => {
     _client.enableAudioVolumeIndicator();
 
     const handleVolume = (volumesInfo) => {
-      setVolumes(prev => {
+      setVolumes((prev) => {
         const atualizado = { ...prev };
-
         volumesInfo.forEach(({ uid, level }) => {
           let nome = "";
-
           if (uid === 0) {
-            // volume local
             nome = meuUsuario.nome;
           } else if (typeof uid === "string") {
             nome = uid.split("@")[0];
           }
-
           if (nome) {
             atualizado[nome] = Math.min(Math.round(level), 100);
           }
         });
-
         return atualizado;
       });
     };
-    // Usuário publica áudio
-    _client.on("volume-indicator",handleVolume);
-    _client.on("user-published",handlePublish);
+
+    _client.on("volume-indicator", handleVolume);
+    _client.on("user-published", handlePublish);
     _client.on("user-joined", handleJoin);
     _client.on("user-left", handleLeave);
 
-    const eventSource = new EventSource(`/api/subscribeUpstash?channel=${_client._joinInfo.uid}`);
+    // 🔹 Listener de mensagens Upstash (mute/unmute)
+    const eventSource = new EventSource(
+      `/api/subscribeUpstash?channel=${_client._joinInfo.uid}`
+    );
+
     eventSource.onmessage = async (event) => {
       const data = JSON.parse(event.data);
-      const targetUid = data.message.from; // UID do remetente
+      const targetUid = data.message.from;
       const shouldMute = data.message.mute;
-      console.log(data.message)
-      if (!_client || !_client.remoteUsers) return;
 
-      // Encontra o usuário remoto
-      const user = _client.remoteUsers.find(u => u._uintid.toString() === targetUid.toString());
+      console.log(data.message);
+
+      if (!_client || !_client.remoteUsers) return;
+      const user = _client.remoteUsers.find(
+        (u) => u._uintid.toString() === targetUid.toString()
+      );
       if (!user) return;
-      // Verifica se o usuário tem track de áudio
+
       if (user.audioTrack) {
         if (shouldMute) {
-          // Pausa ou para o áudio
-          user.audioTrack.stop(); // ou user.audioTrack.setEnabled(false) dependendo da versão
+          user.audioTrack.stop();
         } else {
-          // Toca novamente
           user.audioTrack.play();
         }
-        // 🔹 Atualiza a lista de usuários para refletir o vol
+
         const listaAtual = _client.remoteUsers.map((u) => {
           const skill = u.uid.split("@")[1] || "jogador";
           return {
             nome: u.uid.split("@")[0],
             skill,
             id: u._uintid,
-            // mostra volume se for jogador OU se for narrador e não estiver mutado
-            vol: skill === "jogador" || (skill === "narrador" && u.uid.toString() === targetUid.toString() && !shouldMute)
+            vol:
+              skill === "jogador" ||
+              (skill === "narrador" &&
+                u.uid.toString() === targetUid.toString() &&
+                !shouldMute),
           };
         });
-
         setUsuarios(listaAtual);
       }
     };
+
     eventSource.onerror = (err) => {
       console.error("❌ Erro na conexão SSE:", err);
       eventSource.close();
     };
 
-    // Atualiza lista inicial
+    // 🔹 Listener de desconexão via messager
+    messeger.mListener("disconnect", async (msg) => {
+      console.log("📡 Recebido no canal disconnect:", msg);
+      if (msg.id === meuUsuario.id) {
+        try {
+          if (_client.localTracks && _client.localTracks.length > 0) {
+            _client.localTracks.forEach((track) => {
+              track.stop();
+              track.close();
+            });
+          }
+          await _client.leave();
+          console.log("🔴 Desconectado por comando remoto");
+        } catch (e) {
+          console.warn("Erro ao desconectar remotamente:", e);
+        }
+        router.replace("/");
+      }
+    });
+
     atualizarListaAgora();
 
     return () => {
-      _client.off("volume-indicator",handleVolume);
-      _client.off("user-published",handlePublish)
+      _client.off("volume-indicator", handleVolume);
+      _client.off("user-published", handlePublish);
       _client.off("user-joined", handleJoin);
       _client.off("user-left", handleLeave);
+      eventSource.close();
     };
   }, [_client]);
 
@@ -163,11 +183,11 @@ const NomePage = () => {
     }
   }, [_client]);
 
-  // 🔹 Desconectar
+  // 🔹 Desconectar manualmente
   async function handleDesconectar() {
     try {
       if (_client.localTracks && _client.localTracks.length > 0) {
-        _client.localTracks.forEach(track => {
+        _client.localTracks.forEach((track) => {
           track.stop();
           track.close();
         });
@@ -181,48 +201,37 @@ const NomePage = () => {
   }
 
   // 🔹 Checkbox de seleção (apenas narrador)
-    async function handleCheckbox(usuario) {
-      const estavaSelecionado = selecionados.includes(usuario);
+  async function handleCheckbox(usuario) {
+    const estavaSelecionado = selecionados.includes(usuario);
+    const novosSelecionados = estavaSelecionado
+      ? selecionados.filter((u) => u !== usuario)
+      : [...selecionados, usuario];
 
-      const novosSelecionados = estavaSelecionado
-        ? selecionados.filter((u) => u !== usuario) // desmarcar
-        : [...selecionados, usuario];               // marcar
+    setSelecionados(novosSelecionados);
+    const tipo = estavaSelecionado ? true : false;
 
-      setSelecionados(novosSelecionados);
+    // 🔹 Mantém payload idêntico
+    const payload = {
+      channel: usuario.id,
+      message: {
+        from: meuUsuario.id,
+        mute: tipo,
+      },
+    };
 
-      const tipo = estavaSelecionado ? true : false;
-
-      const sendMessage = async () => {
-        try {
-          const res = await fetch("/api/publishUpstash", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              channel: usuario.id,
-              message: {
-                from: meuUsuario.id,
-                mute: tipo
-              }
-            }),
-          });
-
-          const data = await res.json();
-          console.log("Resposta da API:", data);
-        } catch (err) {
-          console.error("Erro ao chamar a API:", err);
-        }
-      };
-      await sendMessage();
-
+    try {
+      messeger.sMessage(payload.channel, payload.message);
+      console.log("Mensagem enviada via messager:", payload);
+    } catch (err) {
+      console.error("Erro ao enviar via messager:", err);
     }
+  }
 
   // 🔹 Agrupa usuários
   const narradores = usuarios.filter((u) => u.skill === "narrador");
   const jogadores = usuarios.filter((u) => u.skill === "jogador");
 
-  // 🔹 Barra de volume fake (só visual)
+  // 🔹 Barra de volume visual
   function VolumeBar({ value }) {
     return (
       <div
@@ -244,11 +253,7 @@ const NomePage = () => {
             width: `${value}%`,
             height: "100%",
             background:
-              value > 70
-                ? "#22c55e"
-                : value > 30
-                ? "#eab308"
-                : "#ef4444",
+              value > 70 ? "#22c55e" : value > 30 ? "#eab308" : "#ef4444",
             transition: "width 0.3s",
           }}
         />
@@ -256,7 +261,7 @@ const NomePage = () => {
     );
   }
 
-  // 🔹 Lista de usuários
+  // 🔹 Render de listas
   function renderUserList(list) {
     return (
       <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
@@ -385,7 +390,6 @@ const NomePage = () => {
           Narradores
         </div>
         {renderUserList(narradores)}
-
         <div
           style={{
             margin: "18px 0 10px 0",
