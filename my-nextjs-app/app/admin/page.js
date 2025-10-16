@@ -54,6 +54,7 @@ export default function AdminPage() {
       const res = await fetch("/api/getUsers");
       const data = await res.json();
       setUsers(data.users || []);
+      console.log(data.users)
     } catch (err) {
       console.error("Erro ao buscar usuários:", err);
     }
@@ -126,7 +127,7 @@ export default function AdminPage() {
           ) : (
             users.map((user, idx) => (
               <div key={idx} className="user-item">
-                <span>{user.account || user.uid}</span>
+                <span>{`${user.account.split("@")[0]} | ${user.uid}`}</span>
                 <button className="disconnect" onClick={() => handleDisconnect(user.uid)}>Disconnect</button>
               </div>
             ))
