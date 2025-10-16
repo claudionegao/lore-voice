@@ -127,7 +127,7 @@ export default function AdminPage() {
           ) : (
             users.map((user, idx) => (
               <div key={idx} className="user-item">
-                <span>{`${user.account.split("@")[0]} | ${user.uid}`}</span>
+                <span>{`${user.status.account.split("@")[0]} | ${user.uid}`}</span>
                 <button className="disconnect" onClick={() => handleDisconnect(user.uid)}>Disconnect</button>
               </div>
             ))
