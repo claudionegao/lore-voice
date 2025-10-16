@@ -77,6 +77,8 @@ const NameForm = () => {
     // ✅ Verifica se já está conectado (localStorage)
     const alreadyConnected = localStorage.getItem("connected");
     if (alreadyConnected === "true") {
+      setAwaitingApproval(true);
+      setButtonDisabled(true);
       console.log("🔁 Já autorizado anteriormente, pulando aprovação.");
       return connectRtc();
     }
