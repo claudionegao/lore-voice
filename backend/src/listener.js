@@ -11,7 +11,7 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN,
 });
 
-async function startListener() {
+export async function startListener() {
   console.log("🔌 Listener iniciado, aguardando mensagens...");
   
   while (true) {
