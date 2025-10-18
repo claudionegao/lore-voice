@@ -1,0 +1,16 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("PRISMA_DATABASE_URL")
+}
+
+model Mensagem {
+  id        Int      @id @default(autoincrement())
+  conteudo  String
+  channel   String
+  userId    Int
+  criadoEm  DateTime @default(now())
+}
