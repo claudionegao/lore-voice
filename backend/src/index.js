@@ -1,5 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
+import prisma from "./prisma.js";
 import { startListener } from "./listener.js";
 
 dotenv.config();
@@ -13,5 +14,7 @@ app.get("/", (req, res) => {
 
 app.listen(process.env.PORT || 3000, async () => {
   console.log("🚀 Servidor rodando na porta 3000");
-  await startListener();
+  await startListener("geral", async (message) => {
+    console.log("Mensagem recebida no canal geral:", message);
+    })
 });
