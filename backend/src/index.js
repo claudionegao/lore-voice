@@ -1,3 +1,4 @@
 import { startListener } from "./listener.js";
 
-startListener(); // inicia o listener contínuo
+// Aqui você pode adicionar quantos canais quiser
+startListener(["geral", "outro-canal", "mais-um-canal"]);

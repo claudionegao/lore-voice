@@ -4,49 +4,45 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+// Conecta ao Upstash WebSocket
 const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN,
+  url: process.env.UPSTASH_REDIS_WS_URL,  // WebSocket URL
+  token: process.env.UPSTASH_REDIS_REST_TOKEN, // mesmo token
 });
 
-/**
- * Start listener que processa todas as mensagens recebidas
- */
-export async function startListener() {
-  console.log("🔌 Listener iniciado em todos os canais...");
+export async function startListener(channels = ["mensagens"]) {
+  console.log("🔌 Listener WS iniciado...");
 
-  while (true) {
-    try {
-      // Chama subscribe sem filtro de canal, Upstash REST retorna todas as mensagens
-      const messages = await redis.subscribe("*"); // "*" significa todos os canais
-      // Em Upstash REST, pode precisar passar nome do canal. Para vários canais, chamar subscribe várias vezes
+  for (const channel of channels) {
+    const sub = await redis.subscribe(channel);
 
-      for (const message of messages) {
-        try {
-          const data = typeof message === "string" ? JSON.parse(message) : message;
+    sub.on("message", async (message) => {
+      try {
+        const data = typeof message === "string" ? JSON.parse(message) : message;
 
-          if (!data.conteudo || !data.channel || !data.userId) {
-            console.warn("⚠️ Mensagem inválida:", data);
-            continue;
-          }
-
-          await prisma.mensagem.create({
-            data: {
-              conteudo: data.conteudo,
-              channel: data.channel, // salva o canal da mensagem
-              userId: Number(data.userId),
-            },
-          });
-
-          console.log("✅ Mensagem salva:", data);
-        } catch (err) {
-          console.error("❌ Erro ao processar mensagem:", err);
+        if (!data.conteudo || !data.channel || !data.userId) {
+          console.warn("⚠️ Mensagem inválida:", data);
+          return;
         }
-      }
 
-    } catch (err) {
-      console.error("❌ Erro no listener:", err);
-      await new Promise(r => setTimeout(r, 1000));
-    }
+        await prisma.mensagem.create({
+          data: {
+            conteudo: data.conteudo,
+            channel: data.channel,
+            userId: Number(data.userId),
+          },
+        });
+
+        console.log("✅ Mensagem salva:", data);
+      } catch (err) {
+        console.error("❌ Erro ao processar mensagem:", err);
+      }
+    });
+
+    sub.on("error", (err) => {
+      console.error(`❌ Erro no canal ${channel}:`, err);
+    });
+
+    console.log(`👂 Escutando canal: ${channel}`);
   }
 }
