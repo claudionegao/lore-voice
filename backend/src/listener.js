@@ -6,7 +6,7 @@ dotenv.config();
 
 // Conecta ao Upstash WebSocket
 const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_WS_URL,  // WebSocket URL
+  url: process.env.UPSTASH_REDIS_REST_URL,  // WebSocket URL
   token: process.env.UPSTASH_REDIS_REST_TOKEN, // mesmo token
 });
 
